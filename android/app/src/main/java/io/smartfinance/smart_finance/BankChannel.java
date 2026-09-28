@@ -92,6 +92,7 @@ public final class BankChannel {
                 m.put("rate", (double) BankStore.rate(ctx));
                 m.put("pitch", (double) BankStore.pitch(ctx));
                 m.put("batteryIgnored", isIgnoringBattery(ctx));
+                m.put("locate", BankStore.locate(ctx));
                 result.success(m);
                 break;
             }
@@ -150,6 +151,11 @@ public final class BankChannel {
                         start(activity, new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
                     }
                 }
+                result.success(null);
+                break;
+            }
+            case "setLocate": {
+                BankStore.setLocate(ctx, Boolean.TRUE.equals(call.argument("value")));
                 result.success(null);
                 break;
             }

@@ -18,6 +18,8 @@ class BankEvent {
     this.account = '',
     this.title = '',
     this.text = '',
+    this.lat,
+    this.lng,
   });
 
   final String id;
@@ -45,7 +47,12 @@ class BankEvent {
   final String title;
   final String text;
 
+  /// Vị trí điện thoại lúc nhận thông báo (null nếu tắt / không lấy được).
+  final double? lat;
+  final double? lng;
+
   bool get isIncome => direction > 0;
+  bool get hasLocation => lat != null && lng != null;
 
   static BankEvent? tryParse(Map<Object?, Object?> m) {
     final id = m['id'];
@@ -65,6 +72,8 @@ class BankEvent {
       account: (m['account'] as String?) ?? '',
       title: (m['title'] as String?) ?? '',
       text: (m['text'] as String?) ?? '',
+      lat: (m['lat'] as num?)?.toDouble(),
+      lng: (m['lng'] as num?)?.toDouble(),
       postedAt: posted is int ? DateTime.fromMillisecondsSinceEpoch(posted) : DateTime.now(),
     );
   }
@@ -117,6 +126,7 @@ class BankConfig {
     this.rate = 1.0,
     this.pitch = 1.0,
     this.batteryIgnored = false,
+    this.locate = false,
   });
 
   final bool enabled;
@@ -140,6 +150,9 @@ class BankConfig {
   /// Đã được bỏ qua tối ưu hoá pin (chỉ đọc).
   final bool batteryIgnored;
 
+  /// Gắn vị trí hiện tại vào giao dịch khi nhận thông báo.
+  final bool locate;
+
   BankConfig copyWith({
     bool? enabled,
     bool? speak,
@@ -151,6 +164,7 @@ class BankConfig {
     String? chime,
     double? rate,
     double? pitch,
+    bool? locate,
   }) =>
       BankConfig(
         enabled: enabled ?? this.enabled,
@@ -165,6 +179,7 @@ class BankConfig {
         rate: rate ?? this.rate,
         pitch: pitch ?? this.pitch,
         batteryIgnored: batteryIgnored,
+        locate: locate ?? this.locate,
       );
 }
 
@@ -232,6 +247,7 @@ class BankChannel {
       rate: (m['rate'] as num?)?.toDouble() ?? 1.0,
       pitch: (m['pitch'] as num?)?.toDouble() ?? 1.0,
       batteryIgnored: m['batteryIgnored'] == true,
+      locate: m['locate'] == true,
     );
   }
 
@@ -263,6 +279,11 @@ class BankChannel {
   Future<void> openTtsSettings() => _call('openTtsSettings');
   Future<void> openAutostart() => _call('openAutostart');
   Future<void> requestIgnoreBattery() => _call('requestIgnoreBattery');
+
+  Future<void> setLocate(bool v) async {
+    if (!supported) return;
+    await _ch.invokeMethod<void>('setLocate', {'value': v});
+  }
 
   Future<void> setConfig(BankConfig c) async {
     if (!supported) return;

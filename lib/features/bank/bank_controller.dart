@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart' show LocationPermission;
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/utils/ids.dart';
 import '../../shared/providers/app_providers.dart';
 import '../auth/auth_controller.dart';
+import '../moments/location_service.dart';
 import '../settings/settings_controller.dart';
 import 'bank_channel.dart';
 import 'bank_importer.dart';
@@ -78,6 +80,17 @@ class BankController extends AsyncNotifier<BankState> {
   Future<void> setSpeakExpense(bool v) async {
     final cur = state.valueOrNull;
     if (cur != null) await _save(cur.config.copyWith(speakExpense: v));
+  }
+
+  /// Bật/tắt gắn vị trí cho giao dịch tự động. Bật -> xin quyền vị trí "Luôn cho phép";
+  /// trả về quyền đang có để màn hình hướng dẫn nếu chưa đủ.
+  Future<LocationPermission?> setLocate(bool v) async {
+    final cur = state.valueOrNull;
+    if (cur == null) return null;
+    final perm = v ? await LocationService.requestAlways() : null;
+    await _ch.setLocate(v);
+    state = AsyncData(cur.copyWith(config: cur.config.copyWith(locate: v)));
+    return perm;
   }
 
   Future<void> _saveAudio(BankConfig c) async {
@@ -163,6 +176,9 @@ final bankImporterProvider = Provider<BankImporter?>((ref) {
   final locale =
       ref.watch(settingsProvider.select((s) => s.locale)) ?? PlatformDispatcher.instance.locale;
   final l = AppLocalizations(locale);
+  final locate = ref.watch(
+    bankControllerProvider.select((s) => s.valueOrNull?.config.locate ?? false),
+  );
   return BankImporter(
     channel: ref.watch(bankChannelProvider),
     transactions: ref.watch(transactionRepoProvider),
@@ -179,6 +195,17 @@ final bankImporterProvider = Provider<BankImporter?>((ref) {
       expenseName: l.t('bank_expense_name'),
       autoNote: l.t('bank_auto_note'),
     ),
+    locate: locate
+        ? () async {
+            final p = await LocationService.position(timeout: const Duration(seconds: 8));
+            return p == null ? null : (lat: p.latitude, lng: p.longitude);
+          }
+        : null,
+    placeName: (lat, lng) async {
+      final name = await LocationService.placeName(lat, lng);
+      // Không tra được tên (offline) -> để trống, bản đồ sẽ tra lại sau.
+      return name == LocationService.coords(lat, lng) ? null : name;
+    },
   );
 });
 

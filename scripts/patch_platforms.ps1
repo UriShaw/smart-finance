@@ -114,6 +114,9 @@ Edit-File (Join-Path $Root 'android\app\src\main\AndroidManifest.xml') {
   if ($s -notmatch 'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS') {
     $s = $s -replace '(<manifest[^>]*>)', "`$1`n    <uses-permission android:name=`"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`"/>"
   }
+  if ($s -notmatch 'ACCESS_BACKGROUND_LOCATION') {
+    $s = $s -replace '(<manifest[^>]*>)', "`$1`n    <uses-permission android:name=`"android.permission.ACCESS_BACKGROUND_LOCATION`"/>"
+  }
   if ($s -notmatch 'ACCESS_FINE_LOCATION') {
     $s = $s -replace '(<manifest[^>]*>)', "`$1`n    <uses-permission android:name=`"android.permission.ACCESS_FINE_LOCATION`"/>`n    <uses-permission android:name=`"android.permission.ACCESS_COARSE_LOCATION`"/>"
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
@@ -105,6 +106,28 @@ class _BankSettingsScreenState extends ConsumerState<BankSettingsScreen>
     );
   }
 
+  /// Bật gắn vị trí: chưa có quyền "Luôn cho phép" thì hướng dẫn mở cài đặt
+  /// (vẫn bật — khi app đang mở vẫn lấy được vị trí).
+  Future<void> _setLocate(BuildContext context, bool v) async {
+    final perm = await ref.read(bankControllerProvider.notifier).setLocate(v);
+    if (!v || perm == null || perm == LocationPermission.always || !context.mounted) return;
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.tr('bank_locate')),
+        content: Text(ctx.tr('bank_locate_need_always')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ctx.tr('cancel'))),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.tr('open_settings')),
+          ),
+        ],
+      ),
+    );
+    if (open == true) await Geolocator.openAppSettings();
+  }
+
   Widget _toggles(BuildContext context, BankState s) {
     final ctrl = ref.read(bankControllerProvider.notifier);
     return GlassSection(
@@ -130,6 +153,14 @@ class _BankSettingsScreenState extends ConsumerState<BankSettingsScreen>
           title: context.tr('bank_speak_expense'),
           value: s.config.speakExpense,
           onChanged: s.config.enabled && s.config.speak ? ctrl.setSpeakExpense : null,
+        ),
+        LiquidSwitchTile(
+          icon: Icons.my_location_rounded,
+          iconColor: LiquidColors.blue,
+          title: context.tr('bank_locate'),
+          subtitle: context.tr('bank_locate_sub'),
+          value: s.config.locate,
+          onChanged: s.config.enabled ? (v) => _setLocate(context, v) : null,
         ),
         LiquidTile(
           icon: Icons.play_circle_fill_rounded,

@@ -30,6 +30,8 @@ class BankImporter {
     required this.categoryIdForKey,
     required this.labels,
     this.messages,
+    this.locate,
+    this.placeName,
   });
 
   final BankChannel channel;
@@ -42,6 +44,15 @@ class BankImporter {
   /// Khóa danh mục mặc định -> id danh mục (null nếu user đã xóa danh mục đó).
   final Future<String?> Function(String key) categoryIdForKey;
   final BankLabels labels;
+
+  /// Vị trí hiện tại khi app đang mở (thông báo chưa kèm vị trí). null = không gắn vị trí.
+  final Future<({double lat, double lng})?> Function()? locate;
+
+  /// Toạ độ -> tên địa điểm (đường, phường, quận). null / lỗi = để trống.
+  final Future<String?> Function(double lat, double lng)? placeName;
+
+  /// Chỉ lấy GPS ngay cho thông báo vừa tới (người dùng còn ở gần chỗ giao dịch).
+  static const _freshForLocation = Duration(minutes: 2);
 
   bool _running = false;
 
@@ -66,7 +77,17 @@ class BankImporter {
           if (!duplicate) {
             final key = guessCategoryKey(e);
             final catId = key == null ? null : await categoryIdForKey(key);
-            final tx = toTransaction(e, userId: userId, categoryId: catId, labels: labels, id: id);
+            final (lat, lng, place) = await _where(e);
+            final tx = toTransaction(
+              e,
+              userId: userId,
+              categoryId: catId,
+              labels: labels,
+              id: id,
+              latitude: lat,
+              longitude: lng,
+              locationName: place,
+            );
             if (await transactions.importIfAbsent(tx)) created++;
           }
           done.add(e.id);
@@ -135,6 +156,26 @@ class BankImporter {
         postedAt: e.postedAt,
       );
 
+  /// Vị trí của giao dịch: điện thoại đã lấy lúc nhận thông báo, hoặc (app đang mở,
+  /// thông báo vừa tới) lấy GPS ngay. Kèm tên địa điểm nếu tra được.
+  Future<(double?, double?, String?)> _where(BankEvent e) async {
+    final getLocation = locate;
+    if (getLocation == null) return (null, null, null);
+    var lat = e.lat, lng = e.lng;
+    if ((lat == null || lng == null) &&
+        DateTime.now().difference(e.postedAt).abs() <= _freshForLocation) {
+      final p = await getLocation();
+      lat = p?.lat;
+      lng = p?.lng;
+    }
+    if (lat == null || lng == null) return (null, null, null);
+    String? place;
+    try {
+      place = await placeName?.call(lat, lng);
+    } catch (_) {}
+    return (lat, lng, place);
+  }
+
   static String? guessCategoryKey(BankEvent e) {
     final fromContent = e.content.isEmpty ? null : CategoryGuesser.guessKey(e.content);
     if (fromContent != null) {
@@ -152,6 +193,9 @@ class BankImporter {
     required String? categoryId,
     required BankLabels labels,
     String? id,
+    double? latitude,
+    double? longitude,
+    String? locationName,
   }) {
     final content = e.content.trim();
     final base = e.isIncome ? labels.incomeName : labels.expenseName;
@@ -171,6 +215,9 @@ class BankImporter {
       categoryId: categoryId,
       note: note,
       date: e.postedAt,
+      latitude: latitude,
+      longitude: longitude,
+      locationName: locationName,
       createdAt: e.postedAt,
       // updated_at = thời điểm thông báo: nếu user sửa giao dịch trên máy khác thì
       // bản sửa luôn mới hơn (LWW) và không bị ghi đè.

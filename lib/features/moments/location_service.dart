@@ -48,6 +48,19 @@ class LocationService {
     }
   }
 
+  /// Xin quyền "Luôn cho phép" (lấy vị trí cả khi app đang đóng). Trả về quyền cuối cùng.
+  /// Android 11+: lần xin thứ hai mở trang cài đặt để người dùng tự chọn "Luôn cho phép".
+  static Future<LocationPermission> requestAlways() async {
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+      if (perm == LocationPermission.whileInUse) perm = await Geolocator.requestPermission();
+      return perm;
+    } catch (_) {
+      return LocationPermission.denied;
+    }
+  }
+
   /// Xin quyền vị trí sớm (khi mở app) để lúc chụp/ghi giao dịch lấy được ngay.
   static Future<void> ensurePermission() async {
     try {

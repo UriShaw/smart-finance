@@ -105,6 +105,7 @@ public class BankNotificationListener extends NotificationListenerService {
             ev.put("postedAt", now);
             ev.put("trust", r.trust);
             BankStore.addPending(ctx, ev);
+            if (BankStore.locate(ctx)) attachLocation(ctx, ev.getString("id"));
         } catch (JSONException ignored) {
         }
         BankStore.log(ctx, logEntry(pkg, title, body, r, postTime, true));
@@ -117,6 +118,24 @@ public class BankNotificationListener extends NotificationListenerService {
         }
         BankChannel.notifyNewEvent();
         return r;
+    }
+
+    /**
+     * Lấy vị trí hiện tại rồi bổ sung vào giao dịch đang chờ. Nếu Flutter đã nhập giao dịch trước
+     * (app đang mở) thì Flutter tự lấy vị trí bằng GPS của app.
+     */
+    private static void attachLocation(Context ctx, String id) {
+        BankLocator.fetch(ctx, 12_000L, loc -> {
+            if (loc == null) return;
+            try {
+                JSONObject extra = new JSONObject();
+                extra.put("lat", loc.getLatitude());
+                extra.put("lng", loc.getLongitude());
+                if (loc.hasAccuracy()) extra.put("locAcc", (double) loc.getAccuracy());
+                if (BankStore.patchPending(ctx, id, extra)) BankChannel.notifyNewEvent();
+            } catch (JSONException ignored) {
+            }
+        });
     }
 
     private static String clip(String s, int max) {

@@ -35,6 +35,7 @@ public final class BankStore {
     private static final String K_CHIME = "chime";
     private static final String K_RATE = "speech_rate";
     private static final String K_PITCH = "speech_pitch";
+    private static final String K_LOCATE = "locate";
 
     private static final int MAX_PENDING = 1000;
     private static final int MAX_LOG = 150;
@@ -55,6 +56,15 @@ public final class BankStore {
 
     public static boolean speakExpense(Context c) {
         return prefs(c).getBoolean(K_SPEAK_EXPENSE, true);
+    }
+
+    /** Gắn vị trí hiện tại vào giao dịch khi nhận thông báo. */
+    public static boolean locate(Context c) {
+        return prefs(c).getBoolean(K_LOCATE, false);
+    }
+
+    public static void setLocate(Context c, boolean v) {
+        prefs(c).edit().putBoolean(K_LOCATE, v).apply();
     }
 
     public static Set<String> allow(Context c) {
@@ -150,6 +160,27 @@ public final class BankStore {
         arr.put(event);
         while (arr.length() > MAX_PENDING) arr.remove(0);
         prefs(c).edit().putString(K_PENDING, arr.toString()).apply();
+    }
+
+    /** Bổ sung trường vào sự kiện còn trong hàng chờ (vd. vị trí lấy xong sau). false nếu Flutter đã lấy đi. */
+    public static synchronized boolean patchPending(Context c, String id, JSONObject extra) {
+        JSONArray arr = readArray(c, K_PENDING);
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o == null || !id.equals(o.optString("id", ""))) continue;
+            try {
+                java.util.Iterator<String> keys = extra.keys();
+                while (keys.hasNext()) {
+                    String k = keys.next();
+                    o.put(k, extra.get(k));
+                }
+            } catch (JSONException e) {
+                return false;
+            }
+            prefs(c).edit().putString(K_PENDING, arr.toString()).apply();
+            return true;
+        }
+        return false;
     }
 
     /** Đọc hàng chờ (không xóa). Flutter lưu vào DB xong mới gọi [ackPending]. */

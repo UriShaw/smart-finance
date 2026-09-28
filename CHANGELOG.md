@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+17] - 2026-09-29
+- Tu gan vi tri hien tai khi nhan thong bao giao dich (quality: analyze=PASSED, tests=SKIPPED)
+
 ## [1.0.0+16] - 2026-09-29
 - Tu xoa giao dich trung, lich thu-chi theo ngay, an may chu, ban do khong xoay (quality: analyze=PASSED, tests=SKIPPED)
 
