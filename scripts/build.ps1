@@ -316,12 +316,13 @@ $latest = Join-Path $relRoot 'latest'
 if (Test-Path $latest) { Remove-Item $latest -Recurse -Force }
 Copy-Item $relDir $latest -Recurse
 $index = "# Các phiên bản Smart Finance`n`n| Phiên bản | Thư mục | Ngày | Quality |`n|---|---|---|---|`n"
-Get-ChildItem $relRoot -Directory | Where-Object { $_.Name -ne 'latest' } | Sort-Object Name -Descending | ForEach-Object {
+# Sắp theo số build (không theo tên: "+9" > "+16" khi so chữ).
+Get-ChildItem $relRoot -Directory | Where-Object { $_.Name -ne 'latest' } | ForEach-Object {
   $mf = Join-Path $_.FullName 'manifest.json'
-  if (Test-Path $mf) {
-    $j = Get-Content $mf -Raw | ConvertFrom-Json
-    $index += "| $($j.full_version) | $($_.Name) | $(([datetime]$j.built_at).ToString('yyyy-MM-dd')) | analyze=$($j.quality.analyze), tests=$($j.quality.tests) |`n"
-  }
+  if (Test-Path $mf) { [pscustomobject]@{ Dir = $_.Name; J = (Get-Content $mf -Raw | ConvertFrom-Json) } }
+} | Sort-Object { [int]$_.J.build_number }, { [string]$_.J.built_at } -Descending | ForEach-Object {
+  $j = $_.J
+  $index += "| $($j.full_version) | $($_.Dir) | $(([datetime]$j.built_at).ToString('yyyy-MM-dd')) | analyze=$($j.quality.analyze), tests=$($j.quality.tests) |`n"
 }
 [IO.File]::WriteAllText((Join-Path $relRoot 'README.md'), $index, $Utf8NoBom)
 
