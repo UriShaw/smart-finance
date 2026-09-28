@@ -1,0 +1,33 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Bí mật - KHÔNG commit
+config/env.json
+config/*token*.txt
+config/google_oauth*
+client_secret_*.json
+*.jks
+*.keystore
+key.properties
+
+# Output build (giữ README trong releases/)
+releases/*
+!releases/README.md
+build_logs/
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# Log lỗi Kotlin daemon
+android/.kotlin/

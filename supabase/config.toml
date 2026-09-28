@@ -1,0 +1,37 @@
+# Cấu hình Supabase CLI cho môi trường development (supabase start).
+project_id = "smart-finance"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed/seed.sql"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3789"
+# Redirect cho Windows (loopback) + Android/iOS (deep link).
+additional_redirect_urls = [
+  "http://localhost:3789/auth-callback",
+  "io.smartfinance.app://login-callback",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
+skip_nonce_check = false
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"

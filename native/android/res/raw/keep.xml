@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Giữ âm báo khi build release (R8 thu gọn tài nguyên không thấy getIdentifier). -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/ting_ting" />

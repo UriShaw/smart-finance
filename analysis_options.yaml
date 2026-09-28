@@ -1,0 +1,20 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - releases/**
+    - android/**
+    - windows/**
+  language:
+    strict-casts: false
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    use_build_context_synchronously: true
+
+formatter:
+  page_width: 100
