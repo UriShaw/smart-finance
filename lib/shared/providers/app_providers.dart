@@ -141,6 +141,15 @@ final totalSummaryProvider = FutureProvider<BalanceSummary>((ref) async {
   return BalanceCalculator.summarize(ledger);
 });
 
+/// Thu / chi / tiết kiệm của một tháng (trang chủ). Tham số = ngày đầu tháng.
+final monthSummaryProvider = FutureProvider.family<BalanceSummary, DateTime>((ref, month) async {
+  ref.watch(dataRevisionProvider);
+  final ledger = await ref
+      .watch(transactionRepoProvider)
+      .ledger(from: DateX.startOfMonth(month), to: DateX.startOfNextMonth(month));
+  return BalanceCalculator.summarize(ledger);
+});
+
 final bankMessageRepoProvider = Provider<BankMessageRepository>(
     (ref) => BankMessageRepository(ref.watch(appDatabaseProvider), ref.watch(dataEventsProvider)));
 

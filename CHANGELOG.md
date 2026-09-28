@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+18] - 2026-09-29
+- Trang chu: thu nhap, chi tieu, tiet kiem theo thang (quality: analyze=PASSED, tests=SKIPPED)
+
 ## [1.0.0+17] - 2026-09-29
 - Tu gan vi tri hien tai khi nhan thong bao giao dich (quality: analyze=PASSED, tests=SKIPPED)
 

@@ -241,7 +241,8 @@ const Map<String, String> stringsVi = {
   'bank_speak_expense': 'Đọc cả khoản chi',
   'bank_locate': 'Gắn vị trí cho giao dịch tự động',
   'bank_locate_sub': 'Nhận thông báo là lấy luôn địa chỉ hiện tại',
-  'bank_locate_need_always': 'Để lấy được vị trí cả khi app đang đóng, vào Cài đặt → Quyền → Vị trí và chọn "Luôn cho phép". Nếu không, app chỉ gắn vị trí khi đang mở.',
+  'bank_locate_need_always':
+      'Để lấy được vị trí cả khi app đang đóng, vào Cài đặt → Quyền → Vị trí và chọn "Luôn cho phép". Nếu không, app chỉ gắn vị trí khi đang mở.',
   'open_settings': 'Mở cài đặt',
   'bank_speak_test': 'Nghe thử giọng đọc',
   'bank_speak_sample': 'Đã nhận năm trăm nghìn đồng, Vietcombank',
@@ -311,6 +312,7 @@ const Map<String, String> stringsVi = {
   'income_total': 'Thu nhập',
   'expense_total': 'Chi tiêu',
   'savings': 'Tiết kiệm',
+  'home_month': 'Tháng {m}/{y}',
   'monitoring_on': 'Giám sát đang bật',
   'monitoring_off': 'Giám sát đang tắt',
   'monitoring_on_sub': 'Đang tự động đọc số dư giao dịch',

@@ -241,7 +241,8 @@ const Map<String, String> stringsEn = {
   'bank_speak_expense': 'Also read expenses',
   'bank_locate': 'Tag automatic transactions with location',
   'bank_locate_sub': 'Grab the current address when a notification arrives',
-  'bank_locate_need_always': 'To get the location while the app is closed, open Settings → Permissions → Location and choose "Allow all the time". Otherwise the app only tags location while it is open.',
+  'bank_locate_need_always':
+      'To get the location while the app is closed, open Settings → Permissions → Location and choose "Allow all the time". Otherwise the app only tags location while it is open.',
   'open_settings': 'Open settings',
   'bank_speak_test': 'Test voice',
   'bank_speak_sample': 'Đã nhận năm trăm nghìn đồng, Vietcombank',
@@ -311,6 +312,7 @@ const Map<String, String> stringsEn = {
   'income_total': 'Income',
   'expense_total': 'Expenses',
   'savings': 'Savings',
+  'home_month': 'This month · {m}/{y}',
   'monitoring_on': 'Monitoring is on',
   'monitoring_off': 'Monitoring is off',
   'monitoring_on_sub': 'Reading balance notifications automatically',

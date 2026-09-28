@@ -116,6 +116,10 @@ class _AssetCardState extends ConsumerState<AssetCard> {
   Widget build(BuildContext context) {
     final t = ref.watch(totalSummaryProvider).valueOrNull ?? BalanceSummary.empty;
     final today = ref.watch(todayStatsProvider).valueOrNull ?? DayStats.empty;
+    // Thu nhập / chi tiêu / tiết kiệm chỉ tính tháng hiện tại, sang tháng mới tự về 0.
+    final now = DateTime.now();
+    final m = ref.watch(monthSummaryProvider(DateTime(now.year, now.month))).valueOrNull ??
+        BalanceSummary.empty;
     // Có thông báo ngân hàng ghi số dư -> tổng tài sản = số dư ngân hàng báo (không tự cộng trừ).
     final banks = ref.watch(bankBalancesProvider).valueOrNull ?? const <AccountBalance>[];
     final fromBank = banks.isNotEmpty;
@@ -238,14 +242,19 @@ class _AssetCardState extends ConsumerState<AssetCard> {
             style: const TextStyle(
                 color: Color(0xFFBBF7D0), fontSize: 13, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
+          Text(
+            context.tr('home_month', {'m': now.month, 'y': now.year}),
+            style: TextStyle(color: white80, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
-              sub(context.tr('income_total'), t.incomeMinor, const Color(0xFFBBF7D0)),
+              sub(context.tr('income_total'), m.incomeMinor, const Color(0xFFBBF7D0)),
               const SizedBox(width: 8),
-              sub(context.tr('expense_total'), t.expenseMinor, const Color(0xFFFECACA)),
+              sub(context.tr('expense_total'), m.expenseMinor, const Color(0xFFFECACA)),
               const SizedBox(width: 8),
-              sub(context.tr('savings'), t.balanceMinor, const Color(0xFFDBEAFE)),
+              sub(context.tr('savings'), m.balanceMinor, const Color(0xFFDBEAFE)),
             ],
           ),
         ],
