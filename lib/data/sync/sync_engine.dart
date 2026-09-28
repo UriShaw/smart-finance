@@ -74,6 +74,7 @@ class SyncEngine {
     required this.isCloudUser,
     required this.isOnline,
     required this.settings,
+    this.afterPull,
     PhotoService? photos,
     CacheJanitor? janitor,
     DateTime Function()? clock,
@@ -92,6 +93,9 @@ class SyncEngine {
   final bool Function() isCloudUser;
   final Future<bool> Function() isOnline;
   final SyncSettings Function() settings;
+
+  /// Chạy sau khi kéo được bản ghi mới từ máy khác (vd. dọn giao dịch trùng).
+  final Future<void> Function()? afterPull;
   final PhotoService photos;
   late final CacheJanitor janitor;
   final DateTime Function() _clock;
@@ -204,6 +208,7 @@ class SyncEngine {
       error = p.$3;
       if (error != AppErrorType.network && error != AppErrorType.auth) {
         pulled = await _pull(gw, uid);
+        if (pulled > 0) await afterPull?.call();
       }
       final s = settings();
       cleanup = await janitor.run(

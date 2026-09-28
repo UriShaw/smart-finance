@@ -11,7 +11,6 @@ import 'app.dart';
 import 'core/config/env.dart';
 import 'core/security/app_logger.dart';
 import 'core/storage/app_database.dart';
-import 'features/auth/cloud_config.dart';
 import 'features/settings/settings_controller.dart';
 import 'shared/providers/core_providers.dart';
 
@@ -32,8 +31,6 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final db = await AppDatabase.open();
 
-  // Máy chủ nhập trong app (Cài đặt → Máy chủ đồng bộ) ưu tiên hơn máy chủ lúc build.
-  CloudConfig.applySaved(prefs);
   if (Env.cloudConfigured) {
     try {
       await sb.Supabase.initialize(

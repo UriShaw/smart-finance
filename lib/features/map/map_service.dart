@@ -395,6 +395,10 @@ class _OsmMapState extends ConsumerState<_OsmMap> implements MapHandle {
                     maxZoom: 16,
                   ),
             maxZoom: 19,
+            // Chỉ kéo + phóng to/thu nhỏ, không xoay bản đồ.
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+            ),
             onMapReady: () {
               _ready = true;
               // GPS trả về trước khi bản đồ sẵn sàng -> dời ngay lúc này.

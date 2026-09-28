@@ -195,7 +195,10 @@ class _GoogleMapState extends ConsumerState<_GoogleMap> implements MapHandle {
           myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
           mapToolbarEnabled: false,
-          compassEnabled: true,
+          // Chỉ kéo + phóng to/thu nhỏ, không xoay / nghiêng bản đồ.
+          rotateGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          compassEnabled: false,
           onMapCreated: _onCreated,
           onCameraMove: (p) => _zoom = p.zoom,
           onCameraIdle: _emitViewport,

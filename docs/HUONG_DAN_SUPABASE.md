@@ -72,35 +72,24 @@ http://localhost:3789/auth-callback
 >
 > Publishable/anon key là khóa **công khai** — để trong app là an toàn vì dữ liệu được RLS bảo vệ.
 
-## Bước 6 — Kết nối app (không cần build lại)
+## Bước 6 — Gắn máy chủ vào app (build lại)
 
-### Trên điện thoại (Android) và máy tính (Windows) — làm giống nhau
+Máy chủ **chỉ đặt lúc build**, không sửa được trong app (tránh trẻ con / người khác đổi nhầm trên điện thoại).
 
-1. Mở Smart Finance → **Cài đặt** → mục *Dữ liệu & Sao lưu* → **Máy chủ đồng bộ**
-   (hoặc ở màn đăng nhập bấm **Kiểm tra & kết nối** / dòng máy chủ ở cuối).
-2. Dán **Project URL** và **Publishable key** (nút 📋 để dán nhanh; có thể gửi 2 chuỗi này qua Zalo/Messenger
-   cho chính mình rồi copy trên điện thoại).
-3. Bấm **Kiểm tra & kết nối** → thấy "Đã kết nối máy chủ" → màn **Đăng nhập** hiện ra.
-4. Tab **Đăng ký**: nhập tên, email, mật khẩu (≥ 6 ký tự) → **Tạo tài khoản**.
-5. Trên thiết bị thứ hai: kết nối cùng máy chủ → **Đăng nhập** cùng email/mật khẩu → dữ liệu tự kéo về.
+1. Tạo `config\env.json` (copy từ `config\env.example.json`) và điền:
+
+   ```json
+   {
+     "SUPABASE_URL": "https://abcdxyz....supabase.co",
+     "SUPABASE_ANON_KEY": "sb_publishable_...",
+     "OAUTH_DESKTOP_PORT": "3789",
+     "GOOGLE_MAPS_API_KEY": ""
+   }
+   ```
+2. Chạy `build_apk.bat` (hoặc `build.bat`) rồi cài bản mới. File `env.json` nằm trong `.gitignore`.
+3. Mở app → **Đăng ký** / **Đăng nhập Google**. Trên máy thứ hai đăng nhập cùng tài khoản → dữ liệu tự kéo về.
 
 Dữ liệu đã nhập khi còn offline sẽ được **gộp vào tài khoản** ở lần đăng nhập đầu tiên rồi đẩy lên cloud.
-
-### (Tuỳ chọn) Gắn sẵn máy chủ khi build
-
-Nếu không muốn nhập tay trên từng máy: tạo file `config\env.json` (copy từ `config\env.example.json`):
-
-```json
-{
-  "SUPABASE_URL": "https://abcdxyz....supabase.co",
-  "SUPABASE_ANON_KEY": "sb_publishable_...",
-  "OAUTH_DESKTOP_PORT": "3789",
-  "GOOGLE_MAPS_API_KEY": ""
-}
-```
-
-rồi chạy `build_apk.bat`. File này đã nằm trong `.gitignore`, không bị đưa lên Git.
-Máy chủ nhập trong app vẫn được ưu tiên hơn máy chủ gắn lúc build.
 
 ## Bước 7 (tuỳ chọn) — Đăng nhập bằng Google
 

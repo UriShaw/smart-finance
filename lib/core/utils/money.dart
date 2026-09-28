@@ -38,6 +38,22 @@ class Money {
     return value < 0 ? '-$s' : '+$s';
   }
 
+  /// Rút gọn có dấu cho ô lịch: +150k, −45,5k, +1,2tr, −2tỷ (tiếng Việt) / +1.2M, −2B.
+  static String shortSigned(int minor, {String? locale}) {
+    final v = minor.abs() / 100.0;
+    final vi = (locale ?? '').startsWith('vi');
+    final (div, unit) = v >= 1e9
+        ? (1e9, vi ? 'tỷ' : 'B')
+        : v >= 1e6
+            ? (1e6, vi ? 'tr' : 'M')
+            : v >= 1e3
+                ? (1e3, 'k')
+                : (1.0, '');
+    final n = NumberFormat('#,##0.#', locale).format(v / div);
+    final sign = minor > 0 ? '+' : (minor < 0 ? '−' : '');
+    return '$sign$n$unit';
+  }
+
   /// Dạng rút gọn cho biểu đồ: 1,2 tr / 350 N / 1.5M ...
   static String compact(int minor, {String? locale}) {
     final f = NumberFormat.compact(locale: locale);

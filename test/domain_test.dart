@@ -127,13 +127,25 @@ void main() {
       expect(r.buckets.length, 12);
     });
 
-    test('daily expense map for calendar', () {
-      final m = StatisticsAggregator.dailyExpense([
+    test('lịch: chênh lệch thu - chi theo ngày, ngày trống không có', () {
+      final m = StatisticsAggregator.dailyNet([
         e(TxType.expense, 10, DateTime(2026, 4, 3, 8)),
         e(TxType.expense, 20, DateTime(2026, 4, 3, 20)),
         e(TxType.income, 50, DateTime(2026, 4, 3)),
+        e(TxType.expense, 70, DateTime(2026, 4, 5)),
+        e(TxType.income, 90, DateTime(2026, 5, 1)),
       ], 2026, 4);
-      expect(m[3], 3000);
+      expect(m, {3: 2000, 5: -7000});
+    });
+
+    test('rút gọn có dấu cho ô lịch', () {
+      expect(Money.shortSigned(15000000, locale: 'vi'), '+150k');
+      expect(Money.shortSigned(-4550000, locale: 'vi'), '−45,5k');
+      expect(Money.shortSigned(120000000, locale: 'vi'), '+1,2tr');
+      expect(Money.shortSigned(-200000000000, locale: 'vi'), '−2tỷ');
+      expect(Money.shortSigned(120000000, locale: 'en'), '+1.2M');
+      expect(Money.shortSigned(50000, locale: 'vi'), '+500');
+      expect(Money.shortSigned(0, locale: 'vi'), '0');
     });
   });
 

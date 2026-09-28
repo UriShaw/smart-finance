@@ -18,7 +18,6 @@ import '../../shared/widgets/glass.dart';
 import '../../shared/widgets/liquid.dart';
 import '../../shared/widgets/sync_badge.dart';
 import '../auth/auth_controller.dart';
-import '../auth/cloud_config_sheet.dart';
 import '../auth/account_switcher.dart';
 import '../auth/sign_out_dialog.dart';
 import '../bank/bank_channel.dart';
@@ -84,7 +83,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ? null
                       : Env.cloudReady
                           ? () => ref.read(sessionProvider.notifier).showLogin()
-                          : () => showCloudConfigSheet(context),
+                          : null,
                   onSignOut: session.isCloud ? () => confirmSignOut(context, ref) : null,
                 ),
 
@@ -237,12 +236,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   icon: Icons.cloud_sync_rounded,
                   title: context.tr('data_backup'),
                   children: [
-                    _ActionRow(
-                      icon: Icons.dns_rounded,
-                      label: context.tr('server_title'),
-                      onTap: () => showCloudConfigSheet(context),
-                    ),
-                    const _SoftDivider(),
                     if (!Env.cloudReady)
                       _WarnBox(context.tr('cloud_not_configured'))
                     else if (session.isCloud) ...[

@@ -16,12 +16,12 @@ import '../settings/settings_controller.dart';
 import '../transactions/transaction_detail_sheet.dart';
 import '../transactions/transaction_tile.dart';
 
-final _monthExpenseProvider = FutureProvider.family<Map<int, int>, DateTime>((ref, month) async {
+final _monthNetProvider = FutureProvider.family<Map<int, int>, DateTime>((ref, month) async {
   ref.watch(dataRevisionProvider);
   final ledger = await ref
       .watch(transactionRepoProvider)
       .ledger(from: DateX.startOfMonth(month), to: DateX.startOfNextMonth(month));
-  return StatisticsAggregator.dailyExpense(ledger, month.year, month.month);
+  return StatisticsAggregator.dailyNet(ledger, month.year, month.month);
 });
 
 final _dayTxProvider = FutureProvider.family<List<FinanceTransaction>, DateTime>((ref, day) async {
@@ -61,11 +61,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final daily = ref.watch(_monthExpenseProvider(_month)).valueOrNull ?? const {};
+    final daily = ref.watch(_monthNetProvider(_month)).valueOrNull ?? const {};
     final dayTx = ref.watch(_dayTxProvider(_selected));
     final catMap = ref.watch(categoryMapProvider).valueOrNull ?? const {};
     final currency = ref.watch(settingsProvider.select((s) => s.currency));
-    final maxDay = daily.values.isEmpty ? 0 : daily.values.reduce((a, b) => a > b ? a : b);
+    final maxDay = daily.values.fold<int>(0, (m, v) => v.abs() > m ? v.abs() : m);
 
     final calendar = GlassCard(
       child: Column(
@@ -98,16 +98,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
     );
 
-    final dayTotal = daily[_selected.day] ?? 0;
+    final dayNet = _selected.month == _month.month ? daily[_selected.day] : null;
     final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionTitle(
           formatDate(context, _selected),
-          trailing: Text(
-            '${context.tr('day_total')}: ${Money.format(_selected.month == _month.month ? dayTotal : 0, currency, locale: l.intlLocale)}',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
+          trailing: dayNet == null
+              ? null
+              : Text(
+                  '${context.tr('day_net')}: ${Money.format(dayNet, currency, locale: l.intlLocale, signed: true)}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: dayNet >= 0 ? AppColors.income : AppColors.expense,
+                      ),
+                ),
         ),
         GlassCard(
           padding: const EdgeInsets.all(AppSpacing.xs),
@@ -222,8 +226,10 @@ class _MonthGrid extends StatelessWidget {
                     final idx = r * 7 + c - leading + 1;
                     if (idx < 1 || idx > days) return const SizedBox(height: 56);
                     final d = DateTime(month.year, month.month, idx);
-                    final amount = daily[idx] ?? 0;
-                    final intensity = maxDay == 0 ? 0.0 : amount / maxDay;
+                    // Ngày không có giao dịch -> null (ô trống).
+                    final net = daily[idx];
+                    final intensity = net == null || maxDay == 0 ? 0.0 : net.abs() / maxDay;
+                    final tone = (net ?? 0) >= 0 ? AppColors.income : AppColors.expense;
                     final isSel = DateX.sameDay(d, selected);
                     final isToday = DateX.sameDay(d, today);
                     return Padding(
@@ -238,9 +244,9 @@ class _MonthGrid extends StatelessWidget {
                           child: Container(
                             constraints: const BoxConstraints(minHeight: 52),
                             decoration: BoxDecoration(
-                              color: amount > 0
-                                  ? AppColors.expense.withValues(alpha: 0.08 + 0.32 * intensity)
-                                  : null,
+                              color: net == null || net == 0
+                                  ? null
+                                  : tone.withValues(alpha: 0.08 + 0.32 * intensity),
                               borderRadius: BorderRadius.circular(10),
                               border: isSel
                                   ? Border.all(color: scheme.primary, width: 2)
@@ -255,13 +261,16 @@ class _MonthGrid extends StatelessWidget {
                                 Text('$idx',
                                     style: TextStyle(
                                         fontWeight: isToday ? FontWeight.w800 : FontWeight.w500)),
-                                if (amount > 0)
+                                if (net != null)
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
-                                      Money.compact(amount, locale: locale),
-                                      style:
-                                          const TextStyle(fontSize: 10, color: AppColors.expense),
+                                      Money.shortSigned(net, locale: locale),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: tone,
+                                      ),
                                     ),
                                   ),
                               ],

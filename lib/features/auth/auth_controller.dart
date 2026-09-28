@@ -104,7 +104,6 @@ class AuthController extends Notifier<SessionState> {
 
   @override
   SessionState build() {
-    ref.watch(cloudRevisionProvider); // đổi máy chủ trong app -> dựng lại phiên
     ref.onDispose(() => _sub?.cancel());
     final client = _client;
     final offline = ref.read(settingsProvider).offlineChosen;

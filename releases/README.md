@@ -10,6 +10,7 @@
 | 1.0.0+4 | v1.0.0+4_20260924-0105 | 2026-09-24 | analyze=PASSED, tests=PASSED |
 | 1.0.0+3 | v1.0.0+3_20260923-2345 | 2026-09-23 | analyze=PASSED, tests=PASSED |
 | 1.0.0+2 | v1.0.0+2_20260923-2252 | 2026-09-23 | analyze=PASSED, tests=PASSED |
+| 1.0.0+16 | v1.0.0+16_20260929-0127 | 2026-09-29 | analyze=PASSED, tests=SKIPPED |
 | 1.0.0+15 | v1.0.0+15_20260929-0034 | 2026-09-29 | analyze=PASSED, tests=SKIPPED |
 | 1.0.0+14 | v1.0.0+14_20260929-0017 | 2026-09-29 | analyze=PASSED, tests=SKIPPED |
 | 1.0.0+13 | v1.0.0+13_20260928-2324 | 2026-09-28 | analyze=PASSED, tests=SKIPPED |

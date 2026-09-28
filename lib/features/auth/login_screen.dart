@@ -11,8 +11,6 @@ import '../../shared/widgets/liquid.dart';
 import 'account_switcher.dart';
 import 'auth_controller.dart';
 import 'auth_errors.dart';
-import 'cloud_config.dart';
-import 'cloud_config_sheet.dart';
 
 enum _Mode { signIn, signUp }
 
@@ -109,7 +107,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final cloud = Env.cloudReady;
     final busy = _busy || session.busy;
     final signUp = _mode == _Mode.signUp;
-    final host = CloudConfig.hostOf(Env.supabaseUrl) ?? '';
     final googleError = session.error != null ? context.tr('error_${session.error!.name}') : null;
     final error = _error ?? googleError;
     final saved = ref.watch(savedAccountsProvider).valueOrNull ?? const [];
@@ -148,12 +145,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             icon: Icons.cloud_off_rounded,
                             color: AppColors.warning,
                             text: context.tr('server_status_off'),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          FilledButton.icon(
-                            onPressed: () => showCloudConfigSheet(context),
-                            icon: const Icon(Icons.dns_rounded),
-                            label: Text(context.tr('server_connect')),
                           ),
                         ] else ...[
                           // Tài khoản đã đăng nhập trên máy: bấm để vào lại ngay (không cần mật khẩu).
@@ -306,24 +297,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: busy ? null : ctrl.continueOffline,
                           icon: const Icon(Icons.wifi_off),
                           label: Text(context.tr('use_offline')),
-                        ),
-                        const SizedBox(height: 4),
-                        Center(
-                          child: TextButton.icon(
-                            onPressed: busy ? null : () => showCloudConfigSheet(context),
-                            style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurfaceVariant),
-                            icon:
-                                Icon(cloud ? Icons.dns_rounded : Icons.settings_rounded, size: 18),
-                            label: Text(
-                              cloud
-                                  ? context.tr('server_status_on', {'h': host})
-                                  : context.tr('server_title'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12.5),
-                            ),
-                          ),
                         ),
                       ],
                     ),

@@ -6,6 +6,7 @@ import '../../data/backup/backup_service.dart';
 import '../../data/remote/supabase_gateway.dart';
 import '../../data/repositories/bank_message_repository.dart';
 import '../../data/repositories/category_repository.dart';
+import '../../data/repositories/duplicate_cleaner.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../data/sync/cache_janitor.dart';
 import '../../data/sync/photo_service.dart';
@@ -22,7 +23,6 @@ import 'core_providers.dart';
 export 'core_providers.dart';
 
 final remoteGatewayProvider = Provider<RemoteGateway?>((ref) {
-  ref.watch(cloudRevisionProvider);
   if (!Env.cloudReady) return null;
   return SupabaseGateway(sb.Supabase.instance.client);
 });
@@ -60,6 +60,14 @@ final backupServiceProvider = Provider<BackupService>((ref) {
 
 // ---------------------------------------------------------------- Sync
 
+/// Dọn giao dịch trùng (nhiều máy cùng tài khoản cùng nhận 1 thông báo ngân hàng).
+final duplicateCleanerProvider = Provider<DuplicateCleaner>(
+  (ref) => DuplicateCleaner(
+    database: ref.watch(appDatabaseProvider),
+    transactions: ref.watch(transactionRepoProvider),
+  ),
+);
+
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final uid = ref.watch(currentUserIdProvider);
   final isCloud = ref.watch(isCloudUserProvider);
@@ -75,6 +83,9 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
     settings: () {
       final s = ref.read(settingsProvider);
       return SyncSettings(retentionDays: s.retentionDays, keepLocalPhotos: s.keepLocalPhotos);
+    },
+    afterPull: () async {
+      await ref.read(duplicateCleanerProvider).run();
     },
   );
   engine.start();

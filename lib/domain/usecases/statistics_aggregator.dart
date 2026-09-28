@@ -145,13 +145,13 @@ class StatisticsAggregator {
     return b.difference(a).inDays;
   }
 
-  /// Tổng chi theo ngày trong tháng - dùng cho lịch chi tiêu.
-  static Map<int, int> dailyExpense(Iterable<LedgerEntry> entries, int year, int month) {
+  /// Chênh lệch thu - chi theo ngày trong tháng (lịch). Chỉ có ngày có giao dịch.
+  static Map<int, int> dailyNet(Iterable<LedgerEntry> entries, int year, int month) {
     final out = <int, int>{};
     for (final e in entries) {
-      if (e.type != TxType.expense) continue;
       if (e.date.year != year || e.date.month != month) continue;
-      out[e.date.day] = (out[e.date.day] ?? 0) + e.amountMinor;
+      final signed = e.type == TxType.income ? e.amountMinor : -e.amountMinor;
+      out[e.date.day] = (out[e.date.day] ?? 0) + signed;
     }
     return out;
   }

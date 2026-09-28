@@ -9,7 +9,6 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/sync/sync_engine.dart';
 import '../../features/auth/auth_controller.dart';
-import '../../features/auth/cloud_config_sheet.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/sign_out_dialog.dart';
 import '../../features/bank/bank_channel.dart';
@@ -324,8 +323,6 @@ class _TopBar extends ConsumerWidget {
         await confirmSignOut(context, ref);
       } else if (Env.cloudReady) {
         ref.read(sessionProvider.notifier).showLogin();
-      } else {
-        await showCloudConfigSheet(context);
       }
     }
 

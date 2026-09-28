@@ -34,14 +34,6 @@ String authErrorKey(Object e) {
   }
   if (e is AppError) {
     switch (e.detail) {
-      case 'bad_url':
-        return 'server_bad_url';
-      case 'bad_key':
-        return 'server_bad_key';
-      case 'secret_key':
-        return 'server_secret_key';
-      case 'unreachable':
-        return 'server_unreachable';
       case 'no_server':
         return 'server_not_connected';
       case 'account_expired':

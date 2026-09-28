@@ -5,25 +5,9 @@
 class Env {
   const Env._();
 
-  static const String _buildUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String _buildKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-
-  /// Máy chủ đang dùng: mặc định lấy từ lúc build, có thể đổi trong app
-  /// (Cài đặt → Máy chủ) mà không cần build lại - xem CloudConfig.
-  static String _url = _buildUrl;
-  static String _key = _buildKey;
-
-  static String get supabaseUrl => _url;
-  static String get supabaseAnonKey => _key;
-
-  /// Máy chủ gắn sẵn lúc build (config/env.json).
-  static String get buildUrl => _buildUrl;
-  static String get buildKey => _buildKey;
-
-  static void useServer(String url, String key) {
-    _url = url;
-    _key = key;
-  }
+  /// Máy chủ Supabase gắn lúc build (config/env.json) — không đổi được trong app.
+  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
   static const String appEnv = String.fromEnvironment('APP_ENV', defaultValue: 'development');
   static const String appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');

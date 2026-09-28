@@ -195,7 +195,10 @@ final bankAutoImportProvider = Provider<void>((ref) {
       // Đảm bảo danh mục mặc định đã được tạo trước khi gán.
       await ref.read(bootstrapProvider.future);
       final n = await importer.importPending();
-      if (n > 0) ref.read(bankLastImportProvider.notifier).state = n;
+      if (n > 0) {
+        await ref.read(duplicateCleanerProvider).run();
+        ref.read(bankLastImportProvider.notifier).state = n;
+      }
     } catch (_) {}
   }
 

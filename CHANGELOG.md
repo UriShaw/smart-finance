@@ -1,6 +1,13 @@
 # Changelog
 
+## [1.0.0+16] - 2026-09-29
+- Tu xoa giao dich trung, lich thu-chi theo ngay, an may chu, ban do khong xoay (quality: analyze=PASSED, tests=SKIPPED)
+
 ## [Unreleased] - 2026-09-29
+- Tự xoá giao dịch trùng khi 2 máy cùng tài khoản nhận cùng lúc (lệch ≤ 60 giây), giữ bản có ảnh.
+- Lịch: mỗi ngày hiện chênh lệch thu - chi (+150k / −320k), ngày không có giao dịch để trống.
+- Ẩn cấu hình máy chủ khỏi màn đăng nhập và Cài đặt (chỉ đặt lúc build).
+- Bản đồ: chỉ kéo và phóng to/thu nhỏ, không xoay.
 - Dọn mã: xoá Ngân sách, Định kỳ, Nhập nhanh AI, Admin web, Edge Functions (không còn dùng),
   68 chuỗi dịch thừa, code không được gọi; định dạng lại toàn bộ bằng `dart format` (100 cột).
 - Sửa cảnh báo phân tích (publishableKey, BuildContext sau await).

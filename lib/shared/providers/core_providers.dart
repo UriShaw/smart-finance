@@ -35,6 +35,3 @@ class DataRevision extends Notifier<int> {
 }
 
 final dataRevisionProvider = NotifierProvider<DataRevision, int>(DataRevision.new);
-
-/// Tăng mỗi khi kết nối/đổi máy chủ cloud trong app -> session, gateway, sync tạo lại.
-final cloudRevisionProvider = StateProvider<int>((ref) => 0);
