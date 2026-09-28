@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+19] - 2026-09-29
+- Ban do chi dung ve tinh (quality: analyze=PASSED, tests=SKIPPED)
+
 ## [1.0.0+18] - 2026-09-29
 - Trang chu: thu nhap, chi tieu, tiet kiem theo thang (quality: analyze=PASSED, tests=SKIPPED)
 

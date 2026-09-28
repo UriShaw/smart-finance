@@ -66,9 +66,6 @@ class MapViewController {
       bounds.isPoint ? _handle?.moveTo(bounds.center, 17) : _handle?.fitBounds(bounds);
 }
 
-/// Kiểu nền bản đồ.
-enum MapStyle { standard, terrain, satellite }
-
 abstract class MapBackend {
   String get name;
 
@@ -87,9 +84,6 @@ abstract class MapBackend {
   });
 }
 
-/// Kiểu bản đồ đang chọn (giữ trong phiên, dùng chung cho mọi màn bản đồ).
-final mapStyleProvider = StateProvider<MapStyle>((ref) => MapStyle.standard);
-
 /// Android + có GOOGLE_MAPS_API_KEY (config/env.json) -> Google Maps; còn lại OSM.
 final mapBackendProvider = Provider<MapBackend>((ref) {
   if (!kIsWeb && Platform.isAndroid && Env.googleMapsApiKey.isNotEmpty) {
@@ -101,8 +95,8 @@ final mapBackendProvider = Provider<MapBackend>((ref) {
 /// Tâm mặc định: TP. Hồ Chí Minh.
 const kDefaultMapCenter = MapPoint(10.7769, 106.7009);
 
-/// Nút "kiểu bản đồ" + "vị trí của tôi" ở góc phải trên, dùng chung mọi backend.
-class MapControls extends ConsumerWidget {
+/// Nút "vị trí của tôi" ở góc phải trên, dùng chung mọi backend.
+class MapControls extends StatelessWidget {
   const MapControls({
     super.key,
     required this.locating,
@@ -114,76 +108,22 @@ class MapControls extends ConsumerWidget {
   final bool located;
   final VoidCallback onLocate;
 
-  Future<void> _pickStyle(BuildContext anchor, WidgetRef ref) async {
-    final current = ref.read(mapStyleProvider);
-    final box = anchor.findRenderObject() as RenderBox?;
-    final overlay = Overlay.of(anchor).context.findRenderObject() as RenderBox?;
-    if (box == null || overlay == null) return;
-    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
-    final picked = await showMenu<MapStyle>(
-      context: anchor,
-      position: RelativeRect.fromRect(origin & box.size, Offset.zero & overlay.size),
-      items: [
-        for (final (style, icon, key) in const [
-          (MapStyle.standard, Icons.map_outlined, 'map_style_standard'),
-          (MapStyle.terrain, Icons.terrain_rounded, 'map_style_terrain'),
-          (MapStyle.satellite, Icons.satellite_alt_rounded, 'map_style_satellite'),
-        ])
-          CheckedPopupMenuItem(
-            value: style,
-            checked: style == current,
-            child: Row(children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 10),
-              Text(anchor.tr(key)),
-            ]),
-          ),
-      ],
-    );
-    if (picked != null) ref.read(mapStyleProvider.notifier).state = picked;
-  }
-
-  static Widget _button({
-    required String tooltip,
-    required VoidCallback? onPressed,
-    required Widget icon,
-  }) =>
-      Material(
+  @override
+  Widget build(BuildContext context) => Material(
         color: Colors.white,
         elevation: 3,
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: IconButton(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          color: const Color(0xFF1F2937),
-          icon: icon,
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        Builder(
-          builder: (anchor) => _button(
-            tooltip: context.tr('map_style'),
-            onPressed: () => _pickStyle(anchor, ref),
-            icon: const Icon(Icons.layers_rounded),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _button(
           tooltip: context.tr('map_my_location'),
           onPressed: locating ? null : onLocate,
+          color: const Color(0xFF1F2937),
           icon: locating
               ? const SizedBox(
                   width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
               : Icon(located ? Icons.my_location_rounded : Icons.location_searching_rounded),
         ),
-      ],
-    );
-  }
+      );
 }
 
 /// Báo lỗi không lấy được vị trí (dùng chung).
@@ -194,7 +134,7 @@ void showLocationUnavailable(BuildContext context) {
 
 /// OpenStreetMap qua flutter_map. Lưu ý chính sách sử dụng tile của OSM
 /// (không dùng cho tải lớn/thương mại) - xem docs/phases/phase-04-07-architecture-design.md.
-/// Địa hình: OpenTopoMap; vệ tinh: Esri World Imagery (miễn phí, cần ghi nguồn).
+/// Nền: ảnh vệ tinh Esri World Imagery + lớp tên đường (miễn phí, cần ghi nguồn).
 class OsmMapProvider implements MapBackend {
   const OsmMapProvider();
 
@@ -335,48 +275,26 @@ class _OsmMapState extends ConsumerState<_OsmMap> implements MapHandle {
     }
   }
 
-  static List<Widget> _tiles(MapStyle style) => switch (style) {
-        MapStyle.standard => [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'io.smartfinance.app',
-              maxNativeZoom: 19,
-            ),
-          ],
-        MapStyle.terrain => [
-            TileLayer(
-              urlTemplate: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-              subdomains: const ['a', 'b', 'c'],
-              userAgentPackageName: 'io.smartfinance.app',
-              maxNativeZoom: 17,
-            ),
-          ],
-        MapStyle.satellite => [
-            TileLayer(
-              urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/'
-                  'World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              userAgentPackageName: 'io.smartfinance.app',
-              maxNativeZoom: 19,
-            ),
-            // Tên đường/địa danh phủ lên ảnh vệ tinh.
-            TileLayer(
-              urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/'
-                  'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-              userAgentPackageName: 'io.smartfinance.app',
-              maxNativeZoom: 19,
-            ),
-          ],
-      };
+  /// Ảnh vệ tinh + tên đường/địa danh phủ lên trên.
+  static final _tiles = [
+    TileLayer(
+      urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/'
+          'World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      userAgentPackageName: 'io.smartfinance.app',
+      maxNativeZoom: 19,
+    ),
+    TileLayer(
+      urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/'
+          'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      userAgentPackageName: 'io.smartfinance.app',
+      maxNativeZoom: 19,
+    ),
+  ];
 
-  static String _attribution(MapStyle style) => switch (style) {
-        MapStyle.standard => '© OpenStreetMap contributors',
-        MapStyle.terrain => '© OpenStreetMap contributors, SRTM · © OpenTopoMap (CC-BY-SA)',
-        MapStyle.satellite => 'Tiles © Esri — Esri, Maxar, Earthstar Geographics',
-      };
+  static const _attribution = 'Tiles © Esri — Esri, Maxar, Earthstar Geographics';
 
   @override
   Widget build(BuildContext context) {
-    final style = ref.watch(mapStyleProvider);
     final onTap = widget.onTap;
     final me = _me;
     final fit = widget.initialBounds;
@@ -414,7 +332,7 @@ class _OsmMapState extends ConsumerState<_OsmMap> implements MapHandle {
                 : (_, latLng) => onTap(MapPoint(latLng.latitude, latLng.longitude)),
           ),
           children: [
-            ..._tiles(style),
+            ..._tiles,
             if (me != null && _meAccuracy > 0)
               CircleLayer(circles: [
                 CircleMarker(
@@ -492,8 +410,7 @@ class _OsmMapState extends ConsumerState<_OsmMap> implements MapHandle {
             margin: const EdgeInsets.all(6),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             color: Colors.white70,
-            child: Text(_attribution(style),
-                style: const TextStyle(fontSize: 11, color: Colors.black87)),
+            child: const Text(_attribution, style: TextStyle(fontSize: 11, color: Colors.black87)),
           ),
         ),
       ],

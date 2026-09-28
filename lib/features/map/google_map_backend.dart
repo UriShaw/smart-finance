@@ -176,7 +176,6 @@ class _GoogleMapState extends ConsumerState<_GoogleMap> implements MapHandle {
 
   @override
   Widget build(BuildContext context) {
-    final style = ref.watch(mapStyleProvider);
     final onTap = widget.onTap;
     // Bỏ đệm của các điểm không còn trên bản đồ (sau khi phóng to/thu nhỏ).
     final live = {for (final m in widget.markers) m.id};
@@ -186,11 +185,8 @@ class _GoogleMapState extends ConsumerState<_GoogleMap> implements MapHandle {
         gm.GoogleMap(
           initialCameraPosition: gm.CameraPosition(
               target: _ll(widget.initialBounds?.center ?? widget.center), zoom: widget.zoom),
-          mapType: switch (style) {
-            MapStyle.standard => gm.MapType.normal,
-            MapStyle.terrain => gm.MapType.terrain,
-            MapStyle.satellite => gm.MapType.hybrid,
-          },
+          // Chỉ dùng ảnh vệ tinh (kèm tên đường).
+          mapType: gm.MapType.hybrid,
           myLocationEnabled: _hasPermission,
           myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
