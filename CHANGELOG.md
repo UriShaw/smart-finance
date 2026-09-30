@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+21] - 2026-09-30
+- Dang nhap Google kieu goc tren Android (quality: analyze=PASSED, tests=PASSED)
+
 ## [1.0.0+20] - 2026-09-30
 - Sua mat anh va vi tri khi may thu 2 nhan thong bao muon (quality: analyze=PASSED, tests=PASSED)
 

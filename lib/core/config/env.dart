@@ -15,6 +15,13 @@ class Env {
   /// Khoá Maps SDK for Android (Google Cloud). Rỗng -> dùng OpenStreetMap.
   /// Gradle đọc cùng giá trị này để ghi vào AndroidManifest (android/app/build.gradle.kts).
   static const String googleMapsApiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+  /// OAuth client loại "Web application" trên Google Cloud (cùng client đã khai trong
+  /// Supabase → Auth → Google). Đăng nhập gốc Android xin ID token cho client này.
+  /// Client ID là định danh công khai (không phải secret).
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '163903267336-ndq0hif15l2f7luittpk56jq7jojatrl.apps.googleusercontent.com',
+  );
   static const int oauthDesktopPort = int.fromEnvironment('OAUTH_DESKTOP_PORT', defaultValue: 3789);
 
   /// Deep link cho Android/iOS (khai báo trong AndroidManifest bởi script).

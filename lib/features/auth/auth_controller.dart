@@ -13,6 +13,7 @@ import '../../shared/providers/core_providers.dart';
 import '../settings/settings_controller.dart';
 import 'account_vault.dart';
 import 'desktop_oauth.dart';
+import 'native_google_sign_in.dart';
 
 enum SessionKind { localOnly, cloud, signedOut }
 
@@ -187,6 +188,11 @@ class AuthController extends Notifier<SessionState> {
     try {
       if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         await DesktopOAuth.signInWithGoogle(client);
+      } else if (await _nativeGoogle(client) case final done?) {
+        if (!done) {
+          state = state.copyWith(busy: false); // người dùng đóng bảng chọn
+          return;
+        }
       } else {
         await client.auth.signInWithOAuth(
           sb.OAuthProvider.google,
@@ -209,6 +215,17 @@ class AuthController extends Notifier<SessionState> {
     } catch (e) {
       AppLogger.e('auth', 'google sign-in failed', e);
       state = state.copyWith(busy: false, error: AppError.from(e).type);
+    }
+  }
+
+  /// Android: bảng chọn tài khoản gốc. null = không dùng được -> đăng nhập qua trình duyệt.
+  Future<bool?> _nativeGoogle(sb.SupabaseClient client) async {
+    if (!NativeGoogleSignIn.supported) return null;
+    try {
+      return await NativeGoogleSignIn.signIn(client);
+    } catch (e) {
+      AppLogger.e('auth', 'native google sign-in unavailable, using browser', e);
+      return null;
     }
   }
 
