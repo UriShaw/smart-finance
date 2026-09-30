@@ -315,6 +315,12 @@ $new = if ($idx -ge 0) { $old.Substring(0, $idx) + $entry + $old.Substring($idx)
 $latest = Join-Path $relRoot 'latest'
 if (Test-Path $latest) { Remove-Item $latest -Recurse -Force }
 Copy-Item $relDir $latest -Recurse
+# Chỉ giữ bản build cuối (mỗi bản ~120 MB) + 5 log gần nhất.
+Get-ChildItem $relRoot -Directory |
+  Where-Object { $_.Name -ne 'latest' -and $_.FullName -ne (Resolve-Path $relDir).Path } |
+  Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem $LogDir -File -Filter '*.log' | Sort-Object LastWriteTime -Descending |
+  Select-Object -Skip 5 | Remove-Item -Force -ErrorAction SilentlyContinue
 $index = "# Các phiên bản Smart Finance`n`n| Phiên bản | Thư mục | Ngày | Quality |`n|---|---|---|---|`n"
 # Sắp theo số build (không theo tên: "+9" > "+16" khi so chữ).
 Get-ChildItem $relRoot -Directory | Where-Object { $_.Name -ne 'latest' } | ForEach-Object {
