@@ -4,7 +4,7 @@ publish_to: "none"
 
 # version: <semver>+<build number>
 # scripts/build.ps1 tự tăng build number mỗi lần build (hoặc dùng -Bump patch/minor/major).
-version: 1.0.0+22
+version: 1.0.0+23
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
