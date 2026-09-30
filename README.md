@@ -125,7 +125,7 @@ Nguyên tắc thiết kế:
 
 ```
 ┌──────────────────────────────── Flutter app ────────────────────────────────┐
-│  UI (features/*)  ──►  Riverpod providers  ──►  Repositories / Use cases     │
+│  UI (lib/ui)      ──►  Riverpod providers  ──►  Repositories / Use cases     │
 │                                                   │               │          │
 │                                         SQLite (nguồn sự thật)   Domain     │
 │                                                   │            (logic thuần) │
@@ -142,7 +142,7 @@ Nguyên tắc thiết kế:
 - **Giao diện không gọi Supabase trực tiếp.** Mọi ghi đọc đi qua repository vào SQLite; `SyncEngine`
   là nơi duy nhất nói chuyện với máy chủ qua giao diện `RemoteGateway` (dễ thay thế khi test).
 - **Logic nghiệp vụ thuần** (tính số dư, thống kê, giải xung đột, đoán danh mục) nằm trong
-  `domain/usecases`, không phụ thuộc Flutter, có unit test riêng.
+  `frontend/lib/logic/domain/usecases`, không phụ thuộc Flutter, có unit test riêng.
 - **Native → Flutter:** dịch vụ Android ghi giao dịch vào hàng chờ bền vững; Flutter lấy về, lưu vào
   SQLite rồi mới xác nhận để Android xoá, nên app bị tắt giữa chừng cũng không mất giao dịch.
 
@@ -161,25 +161,37 @@ Nguyên tắc thiết kế:
 
 ## Cấu trúc thư mục
 
+Chia theo phòng ban; mỗi thư mục có `README.md` riêng.
+
 ```
 smart_finance/
-├── lib/
-│   ├── core/          cấu hình, hằng số, theme, đa ngôn ngữ, mạng, SQLite, bảo mật, tiện ích
-│   ├── data/          DAO cục bộ, gateway Supabase, mapper, repository, đồng bộ, sao lưu
-│   ├── domain/        entity, giao diện repository, use case (logic thuần)
-│   ├── features/      auth · bank · home · transactions · moments · calendar
-│   │                  statistics · categories · map · settings
-│   └── shared/        widget dùng chung (Liquid Glass), Riverpod providers
-├── native/android/    mã Java/Kotlin (đọc thông báo, giọng đọc, định vị) + test nhận diện
-├── android/ windows/  project nền tảng (script build tự vá và chép mã native vào)
-├── supabase/          setup_all.sql, migrations, rollback, pgTAP RLS test, seed
-├── test/              unit + widget test
-├── integration_test/  luồng end-to-end
-├── scripts/           build.ps1, check.ps1, setup_windows.ps1, patch_platforms.ps1
-├── installer/         Inno Setup (tạo bộ cài Windows)
-├── config/            env.example.json (env.json không đưa lên git)
-├── docs/              hướng dẫn, nhật ký quyết định, kế hoạch kiểm thử, tài liệu phân tích
-└── releases/          bản build (chỉ giữ bản mới nhất)
+├── frontend/              FE · App Flutter (Android + Windows)
+│   ├── lib/
+│   │   ├── ui/            GIAO DIỆN
+│   │   │   ├── screens/   home · transactions · map · calendar · statistics
+│   │   │   │              settings · auth · bank · moments · categories
+│   │   │   ├── widgets/   widget dùng chung (Liquid Glass, khung app)
+│   │   │   ├── theme/     màu, chữ, bo góc
+│   │   │   └── i18n/      tiếng Việt · Anh · Trung
+│   │   ├── logic/         XỬ LÝ / THUẬT TOÁN
+│   │   │   ├── domain/    entity, use case: số dư, thống kê, xung đột, đoán danh mục
+│   │   │   ├── data/      SQLite, đồng bộ Supabase, ảnh, sao lưu, dọn trùng
+│   │   │   ├── bank/      đọc thông báo ngân hàng → giao dịch
+│   │   │   ├── auth/      đăng nhập Google/email, nhiều tài khoản
+│   │   │   ├── location/  GPS, gom điểm bản đồ
+│   │   │   └── state/     Riverpod providers, controller cài đặt
+│   │   ├── core/          cấu hình, hằng số, lỗi, mạng, bảo mật, tiện ích
+│   │   └── main.dart
+│   ├── native_android/    Java/Kotlin: đọc thông báo, giọng đọc, định vị + test nhận diện
+│   ├── android/ windows/  project nền tảng (script build tự vá và chép mã native vào)
+│   ├── test/ integration_test/
+│   └── config/            env.example.json (env.json không đưa lên git)
+├── backend/               BE · Supabase: migrations, RLS, trigger, storage, seed, test RLS
+├── data/                  DA · truy vấn SQL phân tích (thu chi theo tháng, danh mục, trùng…)
+├── qa/                    QA · kế hoạch kiểm thử
+├── devops/                DevOps · file .bat, script build, bộ cài Windows, log build
+├── docs/                  ba/ (nghiệp vụ) · architecture/ (kiến trúc) · guides/ (hướng dẫn)
+└── releases/              bản build (chỉ giữ bản mới nhất)
 ```
 
 ---
@@ -193,11 +205,12 @@ smart_finance/
 - Visual Studio Build Tools (C++) để build Windows
 - Android SDK + JDK 17 để build APK
 
-`setup.bat` cài tự động Flutter, Visual Studio Build Tools và bật Developer Mode.
+`devops/setup.bat` cài tự động Flutter, Visual Studio Build Tools và bật Developer Mode.
 
 ### Chạy thử
 
 ```bat
+cd devops
 setup.bat            :: chỉ lần đầu
 run_dev.bat          :: chạy bản Windows (hot reload)
 run_dev.bat android  :: chạy trên điện thoại Android đang cắm
@@ -207,17 +220,17 @@ Không cấu hình máy chủ thì app chạy **hoàn toàn offline**.
 
 ### Bật đồng bộ cloud
 
-1. Tạo project Supabase (gói Free đủ dùng), chạy `supabase/setup_all.sql` trong SQL Editor.
+1. Tạo project Supabase (gói Free đủ dùng), chạy `backend/supabase/setup_all.sql` trong SQL Editor.
 2. Bật đăng nhập email/Google và thêm Redirect URLs.
-3. Điền `config/env.json` rồi build lại.
+3. Điền `frontend/config/env.json` rồi build lại.
 
-Hướng dẫn từng bước có hình minh hoạ: **[docs/HUONG_DAN_SUPABASE.md](docs/HUONG_DAN_SUPABASE.md)**.
+Hướng dẫn từng bước có hình minh hoạ: **[docs/guides/HUONG_DAN_SUPABASE.md](docs/guides/HUONG_DAN_SUPABASE.md)**.
 
 ---
 
 ## Cấu hình
 
-Tạo `config/env.json` từ `config/env.example.json`:
+Tạo `frontend/config/env.json` từ `frontend/config/env.example.json`:
 
 ```json
 {
@@ -248,6 +261,7 @@ http://localhost:3789/auth-callback       (Windows)
 ## Build và phát hành
 
 ```bat
+cd devops
 build.bat              :: build SmartFinance.exe (Windows)
 build_apk.bat          :: build exe + APK Android, bỏ qua test
 build.bat -Apk -Notes "Mô tả thay đổi"
@@ -262,7 +276,7 @@ build.bat -Apk -Notes "Mô tả thay đổi"
 | `-NoZip`, `-NoOpen` | Không nén zip / không mở thư mục kết quả |
 
 Script tự động: vá cấu hình nền tảng, chép mã native, kiểm tra khoá bí mật, chạy `flutter analyze`,
-build, ký APK bằng keystore trong `android/key.properties`, tăng phiên bản trong `pubspec.yaml`,
+build, ký APK bằng keystore trong `frontend/android/key.properties`, tăng phiên bản trong `frontend/pubspec.yaml`,
 ghi `CHANGELOG.md`. Mỗi bản build nằm trong thư mục riêng:
 
 ```
@@ -274,28 +288,28 @@ releases/v1.0.0+19_20260929-0213/
 └── RELEASE_NOTES.md
 ```
 
-Chi tiết: [docs/BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md).
+Chi tiết: [docs/guides/BUILD_WINDOWS.md](docs/guides/BUILD_WINDOWS.md).
 
 ---
 
 ## Kiểm thử và chất lượng mã
 
 ```bat
-check.bat            :: flutter analyze + flutter test
+devops\check.bat     :: flutter analyze + flutter test
 ```
 
-- **105 test** Flutter (unit + widget), gồm:
+- **107 test** Flutter (unit + widget), gồm:
   - bộ nhập thông báo ngân hàng, chống trùng mô phỏng 2–3 điện thoại, dọn trùng sau đồng bộ;
   - số dư theo ngân hàng, gắn vị trí, nhiều tài khoản trên một máy;
   - SyncEngine (outbox, backoff, xung đột), repository, sao lưu/khôi phục;
   - gom cụm bản đồ, lịch, thống kê, đa ngôn ngữ đồng bộ khoá, bố cục responsive.
 - **65 test** Java cho bộ nhận diện thông báo (chạy bằng JDK thuần):
   ```bat
-  javac -encoding UTF-8 -d out native/android/Bank*.java native/android/SenderName.java ^
-        native/android/VietnameseNumber.java native/android/test/BankParserTest.java
+  javac -encoding UTF-8 -d out frontend/native_android/Bank*.java frontend/native_android/SenderName.java ^
+        frontend/native_android/VietnameseNumber.java frontend/native_android/test/BankParserTest.java
   java -cp out io.smartfinance.smart_finance.BankParserTest
   ```
-- **pgTAP** kiểm tra cách ly dữ liệu RLS: `supabase/tests/rls_isolation.test.sql`.
+- **pgTAP** kiểm tra cách ly dữ liệu RLS: `backend/supabase/tests/rls_isolation.test.sql`.
 - `flutter analyze` không cảnh báo; mã định dạng bằng `dart format` (100 cột).
 
 ---
@@ -307,7 +321,7 @@ check.bat            :: flutter analyze + flutter test
 - Ảnh nằm trong bucket **riêng tư**, xem qua link ký tạm thời.
 - **Thông báo ngân hàng gốc không rời khỏi điện thoại.**
 - Mật khẩu do Supabase Auth xử lý; app không lưu mật khẩu.
-- `config/env.json`, keystore, `key.properties` và file token nằm trong `.gitignore`.
+- `frontend/config/env.json`, keystore, `key.properties` và file token nằm trong `.gitignore`.
 - Chính sách quyền riêng tư: <https://urishaw.github.io/smart-finance/privacy.html>
 
 ### Quyền Android
@@ -339,12 +353,14 @@ Chụp ảnh khoảnh khắc đi qua ứng dụng Camera của hệ thống nên
 
 | Tài liệu | Nội dung |
 |---|---|
-| [docs/HUONG_DAN_SUPABASE.md](docs/HUONG_DAN_SUPABASE.md) | Tạo máy chủ Supabase, đăng nhập Google, Google Maps |
-| [docs/BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) | Chuẩn bị máy và build chi tiết |
-| [docs/DECISION_LOG.md](docs/DECISION_LOG.md) | Nhật ký quyết định kỹ thuật (DEC-xxx) |
-| [docs/CHANGE_REQUESTS.md](docs/CHANGE_REQUESTS.md) | Yêu cầu thay đổi |
-| [docs/TEST_PLAN.md](docs/TEST_PLAN.md) | Kế hoạch kiểm thử |
-| [docs/phases/](docs/phases/) | Khảo sát, yêu cầu, use case, thiết kế kiến trúc |
+| [docs/guides/HUONG_DAN_SUPABASE.md](docs/guides/HUONG_DAN_SUPABASE.md) | Tạo máy chủ Supabase, đăng nhập Google, Google Maps |
+| [docs/guides/BUILD_WINDOWS.md](docs/guides/BUILD_WINDOWS.md) | Chuẩn bị máy và build chi tiết |
+| [docs/architecture/DECISION_LOG.md](docs/architecture/DECISION_LOG.md) | Nhật ký quyết định kỹ thuật (DEC-xxx) |
+| [docs/ba/CHANGE_REQUESTS.md](docs/ba/CHANGE_REQUESTS.md) | Yêu cầu thay đổi |
+| [qa/TEST_PLAN.md](qa/TEST_PLAN.md) | Kế hoạch kiểm thử |
+| [docs/ba/](docs/ba/) | Khảo sát, yêu cầu, use case |
+| [docs/architecture/](docs/architecture/) | Thiết kế kiến trúc |
+| [data/](data/) | Truy vấn SQL phân tích dữ liệu |
 | [CHANGELOG.md](CHANGELOG.md) | Lịch sử phiên bản |
 
 ---

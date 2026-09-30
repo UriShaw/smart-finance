@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+24] - 2026-09-30
+- To chuc du an theo phong ban (frontend, backend, data, qa, devops, docs) (quality: analyze=PASSED, tests=PASSED)
+
 ## [1.0.0+23] - 2026-09-30
 - Dang nhap Google goc dung client cung project voi Android (quality: analyze=PASSED, tests=PASSED)
 

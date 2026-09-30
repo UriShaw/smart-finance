@@ -12,9 +12,9 @@ build/
 !.vscode/extensions.json
 
 # Bí mật - KHÔNG commit
-config/env.json
-config/*token*.txt
-config/google_oauth*
+frontend/config/env.json
+frontend/config/*token*.txt
+frontend/config/google_oauth*
 client_secret_*.json
 *.jks
 *.keystore
@@ -26,8 +26,8 @@ releases/*
 build_logs/
 
 # Supabase local
-supabase/.branches
-supabase/.temp
+backend/supabase/.branches
+backend/supabase/.temp
 
 # Log lỗi Kotlin daemon
-android/.kotlin/
+frontend/android/.kotlin/
