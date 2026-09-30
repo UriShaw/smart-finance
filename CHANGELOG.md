@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+20] - 2026-09-30
+- Sua mat anh va vi tri khi may thu 2 nhan thong bao muon (quality: analyze=PASSED, tests=PASSED)
+
 ## [1.0.0+19] - 2026-09-29
 - Ban do chi dung ve tinh (quality: analyze=PASSED, tests=SKIPPED)
 

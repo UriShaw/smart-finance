@@ -40,8 +40,13 @@ Future<FinanceTransaction?> captureMoment(
   FinanceTransaction tx,
 ) async {
   final mobile = Platform.isAndroid || Platform.isIOS;
-  // Lấy vị trí song song với lúc mở camera để khi chụp xong là có ngay.
-  final locationFuture = LocationService.current();
+  // Giao dịch đã có vị trí -> giữ nơi ban đầu, không thay bằng chỗ đang đứng lúc chụp.
+  // Chưa có thì lấy vị trí song song với lúc mở camera để khi chụp xong là có ngay.
+  final hasPlace = tx.latitude != null && tx.longitude != null;
+  final locationFuture = hasPlace
+      ? Future.value(GeoFix(tx.latitude!, tx.longitude!,
+          tx.locationName ?? LocationService.coords(tx.latitude!, tx.longitude!)))
+      : LocationService.current();
   XFile? file;
   try {
     file = await ImagePicker().pickImage(
@@ -76,7 +81,7 @@ Future<FinanceTransaction?> captureMoment(
   final note = caption.isEmpty
       ? tx.note
       : ((tx.note == null || tx.note!.trim().isEmpty) ? caption : '$caption\n${tx.note}');
-  final fix = result.fix;
+  final fix = hasPlace ? null : result.fix;
   final updated = await repo.save(tx.copyWith(
     localImagePath: local,
     remoteImagePath: null, // ảnh mới -> cần tải lên lại

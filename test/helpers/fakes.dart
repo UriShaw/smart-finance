@@ -44,6 +44,15 @@ class FakeRemoteGateway implements RemoteGateway {
   }
 
   @override
+  Future<Map<String, dynamic>?> insertIfAbsent(String t, Map<String, dynamic> row) async {
+    upsertCalls++;
+    if (offline) throw const SocketException('offline');
+    final id = row['id'] as String;
+    table(t).putIfAbsent(id, () => {...row, 'server_updated_at': _stamp()});
+    return Map<String, dynamic>.of(table(t)[id]!);
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> fetchChanges(String t,
       {required String userId, required String? since, required int limit}) async {
     if (offline) throw const SocketException('offline');

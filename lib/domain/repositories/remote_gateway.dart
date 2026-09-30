@@ -6,6 +6,10 @@ abstract class RemoteGateway {
   /// Upsert idempotent theo `id` (UUID client-generated).
   Future<void> upsert(String table, Map<String, dynamic> row);
 
+  /// Chỉ thêm nếu server chưa có `id` này (không ghi đè). Trả về bản đang có trên
+  /// server sau đó (bản vừa thêm hoặc bản cũ), null nếu không đọc được.
+  Future<Map<String, dynamic>?> insertIfAbsent(String table, Map<String, dynamic> row);
+
   /// Lấy các bản ghi có server_updated_at > [since] (ISO) - tăng dần.
   Future<List<Map<String, dynamic>>> fetchChanges(
     String table, {

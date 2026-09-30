@@ -234,4 +234,77 @@ void main() {
     expect(r.pulled, 5);
     expect((await repo.recent(limit: 100)).length, 5);
   });
+  test('late bank import on 2nd phone does not overwrite photo/location from other phone',
+      () async {
+    // Máy khác đã nhập + gắn ảnh + vị trí nơi giao dịch, đẩy lên server.
+    final id = Ids.newId();
+    final posted = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+    remote.serverWrite('transactions', {
+      'id': id,
+      'user_id': uid,
+      'name': 'Chuyển tiền',
+      'amount_minor': 5000000,
+      'type': 'expense',
+      'category_id': null,
+      'note': null,
+      'transaction_date': posted.toIso8601String(),
+      'location_name': 'Quán cà phê',
+      'latitude': 10.5,
+      'longitude': 106.5,
+      'image_path': '$uid/$id.jpg',
+      'recurring_id': null,
+      'created_at': posted.toIso8601String(),
+      'updated_at': posted.add(const Duration(minutes: 5)).toIso8601String(),
+      'deleted_at': null,
+    });
+
+    // Máy này nhận thông báo muộn (updated_at mới hơn), đang ở nhà.
+    final late = DateTime.now();
+    await db.db.insert('bank_messages', {
+      'id': 'msg-1',
+      'tx_id': id,
+      'direction': -1,
+      'amount': 50000,
+      'posted_at': late.millisecondsSinceEpoch,
+    });
+    await repo.importIfAbsent(FinanceTransaction(
+      id: id,
+      userId: uid,
+      name: 'Chuyển tiền',
+      amountMinor: 5000000,
+      type: TxType.expense,
+      date: posted.toLocal(),
+      latitude: 21.0,
+      longitude: 105.8,
+      locationName: 'Nhà',
+      createdAt: late,
+      updatedAt: late,
+    ));
+    await engine.syncNow(force: true);
+
+    final server = remote.table('transactions')[id]!;
+    expect(server['image_path'], '$uid/$id.jpg');
+    expect(server['location_name'], 'Quán cà phê');
+    final local = (await repo.getById(id))!;
+    expect(local.remoteImagePath, '$uid/$id.jpg');
+    expect(local.locationName, 'Quán cà phê');
+    expect(local.latitude, 10.5);
+    expect(local.syncStatus, SyncStatus.synced);
+    expect(await outbox.count(db.db, uid), 0);
+  });
+
+  test('bank import pushes normally when server has no copy yet', () async {
+    final t = tx(name: 'Nhận tiền');
+    await db.db.insert('bank_messages', {
+      'id': 'msg-2',
+      'tx_id': t.id,
+      'direction': 1,
+      'amount': 40000,
+      'posted_at': t.date.millisecondsSinceEpoch,
+    });
+    await repo.importIfAbsent(t);
+    await engine.syncNow(force: true);
+    expect(remote.table('transactions')[t.id]!['name'], 'Nhận tiền');
+    expect((await repo.getById(t.id))!.syncStatus, SyncStatus.synced);
+  });
 }

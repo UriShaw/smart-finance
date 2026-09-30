@@ -320,7 +320,16 @@ class SyncEngine {
     }
 
     // Metadata vẫn được đẩy kể cả khi ảnh lỗi -> thiết bị khác thấy giao dịch.
-    await gw.upsert(entity.remoteTable, RemoteMapper.toRemote(entity, r));
+    final payload = RemoteMapper.toRemote(entity, r);
+    Map<String, dynamic>? serverRow;
+    if (!deleted && await _isUneditedBankImport(entity, r)) {
+      // Giao dịch tự nhập từ thông báo: máy khác có thể đã đẩy cùng mã (kèm ảnh, vị trí,
+      // chỉnh sửa). Thông báo tới máy này muộn thì updated_at vẫn mới hơn -> upsert sẽ
+      // ghi đè mất ảnh/vị trí. Chỉ thêm khi server chưa có, rồi lấy bản server về.
+      serverRow = await gw.insertIfAbsent(entity.remoteTable, payload);
+    } else {
+      await gw.upsert(entity.remoteTable, payload);
+    }
 
     if (photoFailed) {
       await _outbox.fail(_db, e, nextAttemptAt: _nextAttempt(e.attempts), error: 'storage:photo');
@@ -330,7 +339,10 @@ class SyncEngine {
     var completed = false;
     await _db.transaction((txn) async {
       completed = await _outbox.complete(txn, e);
-      if (completed) {
+      if (!completed) return;
+      if (serverRow != null) {
+        await dao.upsertRaw(txn, RemoteMapper.toLocal(entity, serverRow, existing: r));
+      } else {
         await dao.markSynced(txn, e.entityId, r['updated_at'] as int);
       }
     });
@@ -352,6 +364,15 @@ class SyncEngine {
           where: 'id = ? AND updated_at = ?', whereArgs: [e.entityId, r['updated_at']]);
     }
     return true;
+  }
+
+  /// Giao dịch do máy này tự nhập từ thông báo ngân hàng và chưa ai sửa
+  /// (lúc nhập created_at = updated_at = thời điểm thông báo; sửa thì updated_at đổi).
+  Future<bool> _isUneditedBankImport(SyncEntity entity, Map<String, Object?> r) async {
+    if (entity != SyncEntity.transactions || r['created_at'] != r['updated_at']) return false;
+    final rows = await _db.query('bank_messages',
+        columns: ['id'], where: 'tx_id = ?', whereArgs: [r['id']], limit: 1);
+    return rows.isNotEmpty;
   }
 
   // ---------------------------------------------------------------- PULL

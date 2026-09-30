@@ -77,8 +77,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     _lng = TextEditingController(text: t?.longitude?.toString() ?? '');
     _localPhoto = t?.localImagePath;
     _remotePhoto = t?.remoteImagePath;
-    // Chưa có toạ độ -> tự xin quyền vị trí và lấy luôn, không cần nhập tay.
-    if (_lat.text.trim().isEmpty || _lng.text.trim().isEmpty) {
+    // Giao dịch MỚI chưa có toạ độ -> tự lấy vị trí hiện tại. Giao dịch đã có thì giữ
+    // nguyên nơi ban đầu; chỉ đổi khi người dùng bấm nút vị trí / chọn trên bản đồ.
+    if (t == null && (_lat.text.trim().isEmpty || _lng.text.trim().isEmpty)) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _autoLocate());
     }
   }
@@ -116,8 +117,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       if (file == null) return;
       final bytes = await file.readAsBytes();
       setState(() => _newPhoto = bytes);
-      // Chụp ảnh mới -> cập nhật vị trí nơi chụp nếu chưa có.
+      // Chụp ảnh cho giao dịch mới -> lấy vị trí nơi chụp nếu chưa có.
       if (source == ImageSource.camera &&
+          widget.initial == null &&
           (_lat.text.trim().isEmpty || _location.text.trim().isEmpty)) {
         _autoLocate();
       }

@@ -19,6 +19,15 @@ class SupabaseGateway implements RemoteGateway {
   }
 
   @override
+  Future<Map<String, dynamic>?> insertIfAbsent(String table, Map<String, dynamic> row) async {
+    await _client
+        .from(table)
+        .upsert(row, onConflict: 'id', ignoreDuplicates: true)
+        .timeout(_timeout);
+    return _client.from(table).select().eq('id', row['id'] as Object).maybeSingle().timeout(_timeout);
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> fetchChanges(
     String table, {
     required String userId,

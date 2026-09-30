@@ -8,7 +8,8 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/providers/app_providers.dart';
 
-final _signedUrlProvider = FutureProvider.family<String?, String>((ref, path) async {
+// autoDispose: link ký chỉ sống 1 giờ -> không giữ link cũ (đã hết hạn) suốt phiên app.
+final _signedUrlProvider = FutureProvider.autoDispose.family<String?, String>((ref, path) async {
   final gw = ref.watch(remoteGatewayProvider);
   if (gw == null) return null;
   try {
