@@ -41,4 +41,14 @@ class NativeGoogleSignIn {
     await client.auth.signInWithIdToken(provider: sb.OAuthProvider.google, idToken: idToken);
     return true;
   }
+
+  /// Mã lỗi ngắn để người dùng chụp màn hình gửi lại (không chứa token).
+  static String describe(Object e) {
+    if (e is GoogleSignInException) {
+      final d = e.description;
+      return 'google/${e.code.name}${d == null || d.isEmpty ? '' : ': $d'}';
+    }
+    if (e is sb.AuthException) return 'supabase/${e.statusCode ?? '-'}: ${e.message}';
+    return '${e.runtimeType}: $e';
+  }
 }

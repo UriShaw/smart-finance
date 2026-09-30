@@ -102,6 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
+    final nativeError = ref.watch(nativeGoogleErrorProvider);
     final ctrl = ref.read(sessionProvider.notifier);
     final theme = Theme.of(context);
     final cloud = Env.cloudReady;
@@ -291,6 +292,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : const Icon(Icons.g_mobiledata_rounded, size: 28),
                             label: Text(context.tr(session.busy ? 'signing_in' : 'sign_in_google')),
                           ),
+                          if (nativeError != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            SelectableText(
+                              context.tr('google_native_failed', {'code': nativeError}),
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: theme.colorScheme.error),
+                            ),
+                            TextButton(
+                              onPressed: busy ? null : () => ctrl.signInWithGoogle(browser: true),
+                              child: Text(context.tr('sign_in_google_browser')),
+                            ),
+                          ],
                         ],
                         const SizedBox(height: AppSpacing.sm),
                         TextButton.icon(

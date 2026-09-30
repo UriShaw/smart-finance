@@ -199,6 +199,8 @@ const Map<String, String> stringsVi = {
   'import_done': 'Nhập: {a} mới, {u} cập nhật, {s} bỏ qua, {i} lỗi',
   'account': 'Tài khoản',
   'sign_in_google': 'Đăng nhập với Google',
+  'google_native_failed': 'Đăng nhập nhanh chưa dùng được. Mã lỗi: {code}',
+  'sign_in_google_browser': 'Đăng nhập qua trình duyệt',
   'sign_out': 'Đăng xuất',
   'offline_mode': 'Đang dùng offline',
   'use_offline': 'Dùng offline, không đăng nhập',

@@ -181,16 +181,27 @@ class AuthController extends Notifier<SessionState> {
     }
   }
 
-  Future<void> signInWithGoogle() async {
+  /// [browser] = bỏ qua bảng chọn gốc Android, đăng nhập qua trình duyệt như cũ.
+  Future<void> signInWithGoogle({bool browser = false}) async {
     final client = _client;
     if (client == null) return;
     state = state.copyWith(busy: true, clearError: true);
+    ref.read(nativeGoogleErrorProvider.notifier).state = null;
     try {
       if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         await DesktopOAuth.signInWithGoogle(client);
-      } else if (await _nativeGoogle(client) case final done?) {
-        if (!done) {
-          state = state.copyWith(busy: false); // người dùng đóng bảng chọn
+      } else if (!browser && NativeGoogleSignIn.supported) {
+        try {
+          if (!await NativeGoogleSignIn.signIn(client)) {
+            state = state.copyWith(busy: false); // người dùng đóng bảng chọn
+            return;
+          }
+        } catch (e) {
+          // Không tự nhảy sang trình duyệt: hiện mã lỗi để biết thiếu cấu hình gì,
+          // kèm nút "Đăng nhập qua trình duyệt".
+          AppLogger.e('auth', 'native google sign-in failed', e);
+          ref.read(nativeGoogleErrorProvider.notifier).state = NativeGoogleSignIn.describe(e);
+          state = state.copyWith(busy: false);
           return;
         }
       } else {
@@ -215,17 +226,6 @@ class AuthController extends Notifier<SessionState> {
     } catch (e) {
       AppLogger.e('auth', 'google sign-in failed', e);
       state = state.copyWith(busy: false, error: AppError.from(e).type);
-    }
-  }
-
-  /// Android: bảng chọn tài khoản gốc. null = không dùng được -> đăng nhập qua trình duyệt.
-  Future<bool?> _nativeGoogle(sb.SupabaseClient client) async {
-    if (!NativeGoogleSignIn.supported) return null;
-    try {
-      return await NativeGoogleSignIn.signIn(client);
-    } catch (e) {
-      AppLogger.e('auth', 'native google sign-in unavailable, using browser', e);
-      return null;
     }
   }
 
@@ -400,6 +400,9 @@ final savedAccountsProvider = FutureProvider<List<SavedAccount>>((ref) {
 
 /// true khi người dùng vừa mở link khôi phục mật khẩu (RootGate hiện hộp đặt mật khẩu mới).
 final passwordRecoveryProvider = StateProvider<bool>((ref) => false);
+
+/// Mã lỗi lần đăng nhập Google gốc (Android) gần nhất; null = không lỗi.
+final nativeGoogleErrorProvider = StateProvider<String?>((ref) => null);
 
 final sessionProvider = NotifierProvider<AuthController, SessionState>(AuthController.new);
 

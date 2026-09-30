@@ -200,6 +200,8 @@ const Map<String, String> stringsEn = {
   'import_done': 'Imported: {a} new, {u} updated, {s} skipped, {i} invalid',
   'account': 'Account',
   'sign_in_google': 'Sign in with Google',
+  'google_native_failed': 'Quick sign-in is not available yet. Error code: {code}',
+  'sign_in_google_browser': 'Sign in with the browser',
   'sign_out': 'Sign out',
   'offline_mode': 'Using offline',
   'use_offline': 'Continue offline without signing in',

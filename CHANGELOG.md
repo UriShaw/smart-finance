@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.0+22] - 2026-09-30
+- Hien ma loi dang nhap Google goc, nut dang nhap qua trinh duyet (quality: analyze=PASSED, tests=PASSED)
+
 ## [1.0.0+21] - 2026-09-30
 - Dang nhap Google kieu goc tren Android (quality: analyze=PASSED, tests=PASSED)
 
