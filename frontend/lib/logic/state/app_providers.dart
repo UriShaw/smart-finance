@@ -17,6 +17,7 @@ import '../domain/repositories/remote_gateway.dart';
 import '../domain/usecases/balance_calculator.dart';
 import '../../core/utils/date_x.dart';
 import '../auth/auth_controller.dart';
+import '../bank/bank_balance_cloud.dart';
 import 'settings_controller.dart';
 import 'core_providers.dart';
 
@@ -153,10 +154,29 @@ final monthSummaryProvider = FutureProvider.family<BalanceSummary, DateTime>((re
 final bankMessageRepoProvider = Provider<BankMessageRepository>(
     (ref) => BankMessageRepository(ref.watch(appDatabaseProvider), ref.watch(dataEventsProvider)));
 
-/// Số dư từng tài khoản theo thông báo ngân hàng (rỗng nếu chưa có thông báo nào ghi số dư).
-final bankBalancesProvider = FutureProvider<List<AccountBalance>>((ref) async {
+/// Số dư tính từ thông báo ngân hàng gốc trên máy này (chỉ điện thoại có).
+final _localBankBalancesProvider = FutureProvider<List<AccountBalance>>((ref) async {
   ref.watch(dataRevisionProvider);
   return ref.watch(bankMessageRepoProvider).balances(userId: ref.watch(currentUserIdProvider));
+});
+
+/// Số dư các máy khác đã gửi lên cloud (đọc lại mỗi khi dữ liệu đồng bộ về).
+final _cloudBankBalancesProvider = FutureProvider<List<AccountBalance>>((ref) async {
+  ref.watch(dataRevisionProvider);
+  if (!ref.watch(isCloudUserProvider) || !Env.cloudReady) return const [];
+  return BankBalanceCloud.fetch(sb.Supabase.instance.client);
+});
+
+/// Số dư từng tài khoản theo thông báo ngân hàng: của máy này gộp với số dư điện thoại
+/// khác đã gửi lên (máy tính không nhận thông báo vẫn thấy số dư). Rỗng nếu chưa có.
+final bankBalancesProvider = FutureProvider<List<AccountBalance>>((ref) async {
+  final local = await ref.watch(_localBankBalancesProvider.future);
+  final cloud = await ref.watch(_cloudBankBalancesProvider.future);
+  if (local.isNotEmpty && ref.read(isCloudUserProvider) && Env.cloudReady) {
+    // Không chờ: lỗi mạng thì lần thay đổi sau gửi lại.
+    BankBalanceCloud.publish(sb.Supabase.instance.client, local, cloud).ignore();
+  }
+  return BankBalanceCloud.merge(cloud, local);
 });
 
 /// Thông báo ngân hàng gốc của 1 giao dịch (null nếu nhập tay / máy khác).

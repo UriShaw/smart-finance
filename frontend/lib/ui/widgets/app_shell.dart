@@ -29,6 +29,7 @@ import 'app_logo.dart';
 import 'common.dart';
 import 'glass.dart';
 import 'liquid.dart';
+import 'liquid_dock.dart';
 import 'shell_scope.dart';
 import 'sync_badge.dart';
 
@@ -209,67 +210,67 @@ class _AppShellState extends ConsumerState<AppShell> {
         );
       }
 
-      final extended = c.maxWidth >= 1100;
+      // Máy tính / tablet: Dock kính trong suốt ở đáy (kiểu macOS), hiện đủ mục,
+      // không cần nút menu hay ngăn kéo.
+      void open(Widget screen) =>
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+      const tabColors = [
+        LiquidColors.blue,
+        LiquidColors.indigo,
+        LiquidColors.orange,
+        LiquidColors.purple,
+        LiquidColors.gray,
+      ];
+      final dock = LiquidDock(
+        dividerAfter: _tabs.length - 1,
+        entries: [
+          for (var i = 0; i < _tabs.length; i++)
+            DockEntry(
+              icon: _tabs[i].selectedIcon,
+              label: context.tr(_tabs[i].labelKey),
+              color: tabColors[i],
+              selected: i == _index,
+              onTap: () => _go(i),
+            ),
+          DockEntry(
+            icon: Icons.map_rounded,
+            label: context.tr('nav_map'),
+            color: LiquidColors.teal,
+            onTap: () => open(const MapScreen()),
+          ),
+          DockEntry(
+            icon: Icons.category_rounded,
+            label: context.tr('nav_categories'),
+            color: LiquidColors.pink,
+            onTap: () => open(const CategoryScreen()),
+          ),
+          if (BankChannel.supported)
+            DockEntry(
+              icon: Icons.graphic_eq_rounded,
+              label: context.tr('bank_title'),
+              color: LiquidColors.cyan,
+              onTap: () => open(const BankSettingsScreen()),
+            ),
+        ],
+      );
       return ShellScope(
         openMenu: _openMenu,
         child: Scaffold(
           key: _scaffoldKey,
-          drawer: drawer,
-          drawerScrimColor: Colors.black.withValues(alpha: 0.22),
+          extendBody: true,
           body: SafeArea(
-            child: Row(
+            bottom: false,
+            child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: LiquidSidebar(
-                    extended: extended,
-                    index: _index,
-                    onSelect: _go,
-                    items: items,
-                    header: Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 16),
-                      child: extended
-                          ? Row(
-                              children: [
-                                const SizedBox(width: 8),
-                                const AppLogo(size: 36),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    context.tr('app_name'),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 17,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : const AppLogo(size: 36),
-                    ),
-                    footer: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: GlassCircleButton(
-                        icon: Icons.apps_rounded,
-                        tooltip: context.tr('menu_features'),
-                        onPressed: _openMenu,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      top,
-                      Expanded(child: pageView),
-                    ],
-                  ),
-                ),
+                const _TopBar(),
+                Expanded(child: pageView),
               ],
             ),
+          ),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            minimum: const EdgeInsets.only(bottom: 10),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [dock]),
           ),
         ),
       );
@@ -301,8 +302,10 @@ class _KeepAliveState extends State<_KeepAlive> with AutomaticKeepAliveClientMix
 // =====================================================================
 
 class _TopBar extends ConsumerWidget {
-  const _TopBar({required this.onMenu});
-  final VoidCallback onMenu;
+  const _TopBar({this.onMenu});
+
+  /// null = máy tính (menu đã nằm sẵn ở thanh bên) -> không hiện nút menu.
+  final VoidCallback? onMenu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -333,13 +336,15 @@ class _TopBar extends ConsumerWidget {
         children: [
           Row(
             children: [
-              GlassCircleButton(
-                icon: Icons.menu_rounded,
-                tooltip: context.tr('menu_features'),
-                size: 42,
-                onPressed: onMenu,
-              ),
-              const SizedBox(width: 12),
+              if (onMenu != null) ...[
+                GlassCircleButton(
+                  icon: Icons.menu_rounded,
+                  tooltip: context.tr('menu_features'),
+                  size: 42,
+                  onPressed: onMenu,
+                ),
+                const SizedBox(width: 12),
+              ],
               const AppLogo(size: 32),
               const SizedBox(width: 10),
               Expanded(

@@ -15,6 +15,7 @@ class Env {
   /// Khoá Maps SDK for Android (Google Cloud). Rỗng -> dùng OpenStreetMap.
   /// Gradle đọc cùng giá trị này để ghi vào AndroidManifest (android/app/build.gradle.kts).
   static const String googleMapsApiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+
   /// OAuth client loại "Web application" của project Google Cloud "UriShaw" — cùng project
   /// với client Android (package + SHA-1) và màn Branding "Smart Finance". Đăng nhập gốc
   /// Android xin ID token cho client này; ID phải có trong Supabase → Auth → Google →

@@ -319,7 +319,8 @@ devops\check.bat     :: flutter analyze + flutter test
 - App chỉ chứa **publishable key**; secret/service_role key bị script build chặn.
 - **Row Level Security** trên mọi bảng: tài khoản A không đọc được dữ liệu hay ảnh của tài khoản B.
 - Ảnh nằm trong bucket **riêng tư**, xem qua link ký tạm thời.
-- **Thông báo ngân hàng gốc không rời khỏi điện thoại.**
+- **Thông báo ngân hàng gốc không rời khỏi điện thoại.** Chỉ con số số dư (tên ngân hàng, số cuối
+  tài khoản, thời điểm) được đồng bộ để máy tính cũng xem được số dư.
 - Mật khẩu do Supabase Auth xử lý; app không lưu mật khẩu.
 - `frontend/config/env.json`, keystore, `key.properties` và file token nằm trong `.gitignore`.
 - Chính sách quyền riêng tư: <https://urishaw.github.io/smart-finance/privacy.html>

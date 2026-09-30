@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,8 +44,40 @@ class SmartFinanceApp extends ConsumerWidget {
         return const Locale('vi');
       },
       // Nền kính dùng chung cho mọi màn hình (Scaffold trong suốt).
-      builder: (context, child) => GlassBackground(child: child ?? const SizedBox()),
+      builder: (context, child) {
+        final body = GlassBackground(child: child ?? const SizedBox());
+        if (!_desktop) return body;
+        // Máy tính nhìn xa màn hình hơn điện thoại -> chữ to hơn 15% (vẫn theo cài đặt hệ thống).
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(textScaler: _ScaledText(mq.textScaler, _desktopTextScale)),
+          child: body,
+        );
+      },
       home: const RootGate(),
     );
   }
+}
+
+final bool _desktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+const double _desktopTextScale = 1.15;
+
+/// Nhân thêm hệ số lên cỡ chữ hệ thống (giữ tuỳ chỉnh trợ năng của người dùng).
+class _ScaledText extends TextScaler {
+  const _ScaledText(this.base, this.factor);
+  final TextScaler base;
+  final double factor;
+
+  @override
+  double scale(double fontSize) => base.scale(fontSize) * factor;
+
+  @override
+  double get textScaleFactor => base.scale(14) / 14 * factor;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ScaledText && other.base == base && other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(base, factor);
 }

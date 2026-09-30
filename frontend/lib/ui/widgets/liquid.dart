@@ -1122,16 +1122,14 @@ class _SlidingDroplet extends StatelessWidget {
     required this.index,
     required this.slot,
     required this.size,
-    this.vertical = false,
     this.offset = Offset.zero,
   });
 
   final int index;
 
-  /// Kích thước mỗi ô (ngang: chiều rộng; dọc: chiều cao).
+  /// Chiều rộng mỗi ô.
   final double slot;
   final Size size;
-  final bool vertical;
   final Offset offset;
 
   @override
@@ -1143,16 +1141,6 @@ class _SlidingDroplet extends StatelessWidget {
       builder: (context, v, _) {
         final frac = v - v.floorToDouble();
         final k = 1 + math.sin(frac * math.pi) * 0.45;
-        if (vertical) {
-          final h = size.height * k;
-          return Positioned(
-            left: offset.dx,
-            width: size.width,
-            top: offset.dy + v * slot + (slot - size.height) / 2 - (h - size.height) / 2,
-            height: h,
-            child: LiquidDroplet(radius: size.width / 2, colors: AppColors.accentGradient),
-          );
-        }
         final w = size.width * k;
         return Positioned(
           top: offset.dy,
@@ -1259,147 +1247,6 @@ class GlassNavBar extends StatelessWidget {
 }
 
 /// Thanh bên kính (Windows / tablet): giọt kính xanh trượt dọc.
-class LiquidSidebar extends StatelessWidget {
-  const LiquidSidebar({
-    super.key,
-    required this.items,
-    required this.index,
-    required this.onSelect,
-    this.extended = false,
-    this.header,
-    this.footer,
-  });
-
-  final List<GlassNavItem> items;
-  final int index;
-  final ValueChanged<int> onSelect;
-  final bool extended;
-  final Widget? header;
-  final Widget? footer;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final itemH = extended ? 50.0 : 66.0;
-    final width = extended ? 220.0 : 84.0;
-    return GlassCard(
-      blur: true,
-      radius: 30,
-      opacity: 1.1,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: SizedBox(
-        width: width,
-        child: Column(
-          children: [
-            if (header != null) header!,
-            Expanded(
-              child: SingleChildScrollView(
-                child: Stack(
-                  children: [
-                    if (extended)
-                      _SlidingDroplet(
-                        index: index,
-                        slot: itemH,
-                        size: Size(width, itemH - 6),
-                        vertical: true,
-                      )
-                    else
-                      _SlidingDroplet(
-                        index: index,
-                        slot: itemH,
-                        size: const Size(52, 32),
-                        vertical: true,
-                        offset: Offset((width - 52) / 2, -9),
-                      ),
-                    Column(
-                      children: [
-                        for (var i = 0; i < items.length; i++)
-                          SizedBox(
-                            height: itemH,
-                            child: Semantics(
-                              selected: i == index,
-                              button: true,
-                              label: items[i].label,
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () => onSelect(i),
-                                  child: extended
-                                      ? Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                                          child: Row(
-                                            children: [
-                                              _NavIcon(item: items[i], selected: i == index),
-                                              const SizedBox(width: 14),
-                                              Expanded(
-                                                child: Text(
-                                                  items[i].label,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontWeight: i == index
-                                                        ? FontWeight.w800
-                                                        : FontWeight.w600,
-                                                    color: i == index
-                                                        ? Colors.white
-                                                        : scheme.onSurface,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      : Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              height: 32,
-                                              child: Center(
-                                                child:
-                                                    _NavIcon(item: items[i], selected: i == index),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 2),
-                                              child: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  items[i].label,
-                                                  maxLines: 1,
-                                                  style: TextStyle(
-                                                    fontSize: 11.5,
-                                                    fontWeight: i == index
-                                                        ? FontWeight.w800
-                                                        : FontWeight.w600,
-                                                    color: i == index
-                                                        ? scheme.primary
-                                                        : scheme.onSurfaceVariant,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (footer != null) footer!,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Chip lọc kiểu kính: chọn = viên xanh gradient chữ trắng; không chọn = kính trắng viền mảnh.
 class GlassChip extends StatelessWidget {
   const GlassChip({

@@ -24,7 +24,12 @@ class SupabaseGateway implements RemoteGateway {
         .from(table)
         .upsert(row, onConflict: 'id', ignoreDuplicates: true)
         .timeout(_timeout);
-    return _client.from(table).select().eq('id', row['id'] as Object).maybeSingle().timeout(_timeout);
+    return _client
+        .from(table)
+        .select()
+        .eq('id', row['id'] as Object)
+        .maybeSingle()
+        .timeout(_timeout);
   }
 
   @override

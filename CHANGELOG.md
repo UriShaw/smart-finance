@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0+26] - 2026-09-30
+- May tinh: Dock kinh kieu macOS, so du ngan hang tu dien thoai, chu to hon (quality: analyze=PASSED, tests=PASSED)
+
+## [1.0.0+25] - 2026-09-30
+- May tinh: hien so du ngan hang tu dien thoai, menu day du o thanh ben, chu to hon (quality: analyze=PASSED, tests=PASSED)
+
 ## [1.0.0+24] - 2026-09-30
 - To chuc du an theo phong ban (frontend, backend, data, qa, devops, docs) (quality: analyze=PASSED, tests=PASSED)
 
